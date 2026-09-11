@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G6 Internet · Mensagens de Atendimento</title>
+<style>
+  :root{
+    --ink:#0B1B2B;
+    --ink-soft:#33465C;
+    --paper:#F4F7F8;
+    --panel:#FFFFFF;
+    --line:#DCE4E8;
+    --teal:#0E7C7B;
+    --teal-deep:#0A5F5E;
+    --teal-tint:#E4F2F1;
+    --amber:#C77B27;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Top tab bar ---------- */
+  .tabbar{
+    display:flex;
+    gap:4px;
+    background:var(--ink);
+    padding:10px 20px 0;
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  .tabbar button{
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    color:#9FB8B7;
+    background:transparent;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px 8px 0 0;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tabbar button:hover{color:#DCEAE9; background:rgba(255,255,255,.06);}
+  .tabbar button.active{background:var(--paper); color:var(--ink);}
+  .tabbar button .count{
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:#6E8C8A;
+    background:rgba(255,255,255,.08);
+    padding:1px 6px;
+    border-radius:10px;
+  }
+  .tabbar button.active .count{background:var(--teal-tint); color:var(--teal-deep);}
+
+  /* ---------- Layout shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:280px minmax(0, 1fr);
+    min-height:calc(100vh - 46px);
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    position:sticky; top:46px; align-self:start;
+    height:calc(100vh - 46px); overflow-y:auto;
+    background:var(--ink);
+    color:#DCEAE9;
+    padding:28px 0 40px;
+    border-right:1px solid var(--line);
+  }
+  .brand{
+    padding:0 24px 20px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    margin-bottom:14px;
+  }
+  .brand .fiber{
+    display:inline-block;
+    width:34px; height:10px;
+    background:linear-gradient(90deg,var(--teal) 0 6px, transparent 6px 10px,var(--teal) 10px 16px, transparent 16px 20px, var(--teal) 20px 26px, transparent 26px 30px, var(--teal) 30px 34px);
+    margin-bottom:10px;
+  }
+  .brand h1{
+    font-size:17px;
+    margin:0 0 4px;
+    font-weight:700;
+    letter-spacing:.2px;
+    color:#fff;
+  }
+  .brand p{
+    margin:0;
+    font-size:12.5px;
+    color:#9FB8B7;
+  }
+  .nav-list{list-style:none; margin:0; padding:0 10px;}
+  .nav-list a{
+    display:flex;
+    gap:10px;
+    align-items:baseline;
+    padding:9px 14px;
+    border-radius:6px;
+    color:#C7DAD9;
+    text-decoration:none;
+    font-size:13.5px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav-list a:hover{background:rgba(255,255,255,.06); color:#fff;}
+  .nav-list a.active{background:var(--teal); color:#fff;}
+  .nav-list .idx{
+    font-family:var(--mono);
+    font-size:11px;
+    color:#6E8C8A;
+    min-width:18px;
+  }
+  .nav-list a.active .idx{color:rgba(255,255,255,.75);}
+  .nav-count{
+    margin-left:auto;
+    font-family:var(--mono);
+    font-size:11px;
+    color:#6E8C8A;
+  }
+  .nav-list a.active .nav-count{color:rgba(255,255,255,.75);}
+
+  /* ---------- Main ---------- */
+  main{padding:36px 44px 110px; max-width:900px; min-width:0;}
+
+  .page-head h2{
+    font-size:28px;
+    margin:0 0 6px;
+    font-weight:700;
+  }
+  .page-head p.sub{
+    margin:0 0 26px;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    max-width:620px;
+  }
+
+  .top-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:30px;
+  }
+
+  /* ---------- Floating search bar (bottom) ---------- */
+  .floating-search{
+    position:fixed;
+    left:50%;
+    bottom:26px;
+    transform:translateX(-50%);
+    width:min(600px, 92vw);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:8px 10px 8px 18px;
+    box-shadow:0 12px 32px rgba(11,27,43,.18), 0 2px 8px rgba(11,27,43,.08);
+    z-index:50;
+  }
+  .floating-search svg{
+    width:17px; height:17px;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .floating-search input{
+    flex:1;
+    border:none;
+    outline:none;
+    background:transparent;
+    font-size:14.5px;
+    font-family:var(--sans);
+    color:var(--ink);
+    min-width:0;
+  }
+  .floating-search input::placeholder{color:#8CA0AD;}
+  .floating-search .result-count{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    font-family:var(--mono);
+    background:var(--teal-tint);
+    padding:5px 10px;
+    border-radius:999px;
+    flex-shrink:0;
+  }
+  .floating-search:focus-within{
+    border-color:var(--teal);
+    box-shadow:0 12px 32px rgba(11,27,43,.18), 0 0 0 3px var(--teal-tint);
+  }
+
+  section.category{
+    margin-bottom:44px;
+    scroll-margin-top:70px;
+  }
+  .category h3{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-size:19px;
+    margin:0 0 16px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--ink);
+  }
+  .category h3 .n{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--teal-deep);
+    background:var(--teal-tint);
+    padding:2px 7px;
+    border-radius:4px;
+  }
+
+  .msg-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:16px 18px;
+    margin-bottom:12px;
+    position:relative;
+  }
+  .msg-card .text{
+    font-size:14.5px;
+    white-space:pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    color:var(--ink);
+    outline:none;
+    min-height:1.4em;
+  }
+  .msg-card .text:focus{
+    background:var(--teal-tint);
+    border-radius:3px;
+  }
+  .msg-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:10px;
+  }
+  .btn{
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:600;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink-soft);
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .btn:hover{border-color:var(--teal); color:var(--teal-deep);}
+  .btn.copy.copied{background:var(--teal); color:#fff; border-color:var(--teal);}
+  .btn.remove:hover{border-color:#C4432E; color:#C4432E;}
+
+  .add-row{
+    margin-top:10px;
+  }
+  .add-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--teal-deep);
+    background:none;
+    border:1px dashed var(--teal);
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .add-btn:hover{background:var(--teal-tint);}
+
+  .no-results{
+    color:var(--ink-soft);
+    font-size:14px;
+    padding:30px 0;
+  }
+
+  .hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--teal-tint);
+    border:1px solid #C9E4E2;
+    padding:12px 16px;
+    border-radius:8px;
+    margin-bottom:32px;
+  }
+  .hint b{color:var(--teal-deep);}
+  .hint code{
+    background:rgba(255,255,255,.6);
+    padding:1px 5px;
+    border-radius:4px;
+    font-family:var(--mono);
+    font-size:11.5px;
+  }
+
+  .save-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    padding:0 16px;
+    border-radius:8px;
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease;
+  }
+  .save-btn:hover{background:var(--teal-deep);}
+  .save-btn svg{width:16px; height:16px;}
+  .save-btn.dirty{background:var(--amber);}
+  .save-btn.dirty:hover{background:#A9631C;}
+  .save-btn.saved{background:#3D8B5F;}
+  
+  .add-cat-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: calc(100% - 20px);
+    margin: 16px auto 0;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: #9FB8B7;
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.2);
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .add-cat-btn:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.05);
+  }
+
+  ::selection{background:var(--teal-tint);}
+</style>
+</head>
+<body>
+
+<div class="tabbar" id="tabbar"><button class="active"><span>Mensagens de Atendimento</span><span class="count">224</span></button><button class=""><span>Abertura de Solicitação</span><span class="count">11</span></button></div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="fiber"></span>
+      <h1 id="brandTitle">Mensagens · G6</h1>
+      <p id="brandSub">Banco de respostas padrão para atendimento</p>
+    </div>
+    <ul class="nav-list" id="navList"><li><a href="#cat-atendimento-faturas-e-boletos" class=""><span class="idx">01</span><span>Faturas e Boletos</span><span class="nav-count">30</span></a></li><li><a href="#cat-atendimento-pagamento-via-pix" class="active"><span class="idx">02</span><span>Pagamento via Pix</span><span class="nav-count">28</span></a></li><li><a href="#cat-atendimento-bloqueio-e-desbloqueio-de-sinal" class=""><span class="idx">03</span><span>Bloqueio e Desbloqueio de Sinal</span><span class="nav-count">33</span></a></li><li><a href="#cat-atendimento-mudanca-de-comodo"><span class="idx">04</span><span>Mudança de Cômodo</span><span class="nav-count">12</span></a></li><li><a href="#cat-atendimento-mudanca-de-endereco"><span class="idx">05</span><span>Mudança de Endereço</span><span class="nav-count">16</span></a></li><li><a href="#cat-atendimento-troca-de-titularidade"><span class="idx">06</span><span>Troca de Titularidade</span><span class="nav-count">12</span></a></li><li><a href="#cat-atendimento-cancelamento"><span class="idx">07</span><span>Cancelamento</span><span class="nav-count">4</span></a></li><li><a href="#cat-atendimento-assinatura-digital-e-termos"><span class="idx">08</span><span>Assinatura Digital e Termos</span><span class="nav-count">5</span></a></li><li><a href="#cat-atendimento-planos-e-valores"><span class="idx">09</span><span>Planos e Valores</span><span class="nav-count">9</span></a></li><li><a href="#cat-atendimento-alteracao-de-velocidade-e-data-de-vencimento"><span class="idx">10</span><span>Alteração de Velocidade e Data de Vencimento</span><span class="nav-count">7</span></a></li><li><a href="#cat-atendimento-migracao-de-tecnologia-radio-fibra"><span class="idx">11</span><span>Migração de Tecnologia (Rádio → Fibra)</span><span class="nav-count">1</span></a></li><li><a href="#cat-atendimento-rede-interna-e-pontos-adicionais"><span class="idx">12</span><span>Rede Interna e Pontos Adicionais</span><span class="nav-count">5</span></a></li><li><a href="#cat-atendimento-rede-mesh"><span class="idx">13</span><span>Rede Mesh</span><span class="nav-count">2</span></a></li><li><a href="#cat-atendimento-ip-fixo-e-equipamentos"><span class="idx">14</span><span>IP Fixo e Equipamentos</span><span class="nav-count">4</span></a></li><li><a href="#cat-atendimento-explicacoes-tecnicas"><span class="idx">15</span><span>Explicações Técnicas</span><span class="nav-count">1</span></a></li><li><a href="#cat-atendimento-aplicativos-svas-skeelo-cloud-e-cdn-tv"><span class="idx">16</span><span>Aplicativos (SVAs — Skeelo, Cloud e CDN TV)</span><span class="nav-count">9</span></a></li><li><a href="#cat-atendimento-portal-do-cliente-e-aplicativo"><span class="idx">17</span><span>Portal do Cliente e Aplicativo</span><span class="nav-count">1</span></a></li><li><a href="#cat-atendimento-horario-e-encerramento-de-expediente"><span class="idx">18</span><span>Horário e Encerramento de Expediente</span><span class="nav-count">13</span></a></li><li><a href="#cat-atendimento-telefonia-voip-legado-eixo"><span class="idx">19</span><span>Telefonia VoIP (Legado Eixo)</span><span class="nav-count">1</span></a></li><li><a href="#cat-atendimento-debitos-com-terceiros-e-outros-setores"><span class="idx">20</span><span>Débitos com Terceiros e Outros Setores</span><span class="nav-count">7</span></a></li><li><a href="#cat-atendimento-confirmacao-de-dados-cadastrais"><span class="idx">21</span><span>Confirmação de Dados Cadastrais</span><span class="nav-count">6</span></a></li><li><a href="#cat-atendimento-mensagens-de-cortesia-e-encerramento-de-atendimento"><span class="idx">22</span><span>Mensagens de Cortesia e Encerramento de Atendimento</span><span class="nav-count">18</span></a></li><button class="add-cat-btn">+ Nova categoria</button></ul>
+  </aside>
+
+  <main>
+    <div class="page-head">
+      <h2 id="pageTitle">Mensagens de Atendimento</h2>
+      <p class="sub" id="pageSub">Todas as respostas padrão organizadas por assunto. Use a busca para encontrar rapidamente, clique em "Copiar" para colar no WhatsApp, ou edite o texto diretamente clicando sobre ele.</p>
+    </div>
+
+    <div class="hint">
+      <b>Como editar:</b> clique em qualquer mensagem para alterar o texto, use "+ Nova mensagem" para adicionar e "Remover" para excluir. Quando terminar, clique em <b>Salvar alterações</b> (ou Ctrl+S) para baixar uma nova versão deste arquivo já com suas edições — depois é só substituir o <code>mensagens.html</code> antigo pelo novo baixado. As duas abas são salvas juntas, no mesmo arquivo.
+    </div>
+
+    <div class="top-actions">
+      <button class="save-btn dirty" id="saveBtn" title="Ctrl+S">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        <span id="saveBtnLabel">Salvar alterações</span>
+      </button>
+    </div>
+
+    <div id="content"><section class="category" id="cat-atendimento-faturas-e-boletos" style="display: none;"><h3><span class="n">01</span> Faturas e Boletos</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">No momento não estamos conseguindo enviar o boleto, pois o sistema identificou um padrão de pagamento via PIX mensal. Dessa forma, o boleto não foi gerado para pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Sim, foi encaminhado pela G6 mesmo. 😊
+Ocorreu o registro bancário das duas mensalidades antecipadamente e, por isso, o banco realizou a impressão dos boletos, que foram entregues antes da data. Pode ficar tranquilo(a): esses boletos se referem à G6 Internet.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Ocorreu um erro em nosso sistema. Acabei de ajustar o valor do seu boleto. Como será necessário o registro pelo banco, ele estará disponível para pagamento amanhã, tudo bem? 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Peço que entre em contato amanhã para que possamos enviar o boleto com o novo valor referente ao vencimento do dia 26/04, pois será gerado um novo registro pelo banco. Esse boleto estará disponível para pagamento a partir de amanhã.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Este boleto é proporcional, contado desde o dia da instalação até a data de vencimento. Por esse motivo, foi gerado um valor a mais no seu primeiro boleto, certo? 😊O boleto do próximo mês já virá no valor certinho contratado. </div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como o seu boleto tem mais de 60 dias, ele perdeu o registro no banco. Dessa forma, o pagamento deve ser feito pelo código Copia e Cola do Pix ou presencialmente em nossa loja.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que o boleto perdeu o registro do banco. Dessa forma, é necessário realizar o pagamento pelo código Pix ou presencialmente em nossa loja. Como prefere fazer?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A G6 Internet disponibiliza as faturas das seguintes formas:
+- Aplicativo G6 Internet – App do Cliente
+- E-mail: enviamos mensalmente para o e-mail cadastrado
+- WhatsApp: é possível acessar as faturas a qualquer momento
+- Site: https://portal.g6internet.com.br/facilita-totem (consulta e pagamento via Pix e/ou código de barras)
+- Presencialmente em nosso escritório
+- Entrega no endereço: nesse modo, o banco emite as faturas e o envio é feito pelos Correios. Como se trata de serviço terceirizado, não é possível garantir a data exata de chegada.
+
+As faturas têm dia fixo de vencimento. Caso os Correios não realizem a entrega até a data, entre em contato conosco com antecedência ou acesse a fatura por um dos outros meios, para evitar acréscimos.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Os boletos são enviados por um serviço terceirizado. Infelizmente não conseguimos verificar o motivo do atraso na entrega, mas você pode gerar a segunda via pelo contato conosco ou pelo Portal do Cliente. Também enviamos aviso de vencimento por e-mail e SMS. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Os boletos são enviados por um serviço terceirizado. Alguns clientes não estão recebendo a entrega; já estamos em contato com a empresa para regularizar a situação. Você pode gerar a segunda via pelo contato conosco, pelo Portal do Cliente, e também enviamos aviso por e-mail e SMS. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">As faturas constam em nosso sistema como já encaminhadas pelo banco à empresa terceirizada responsável pela entrega. É possível que esteja ocorrendo alguma intercorrência no processo de distribuição por parte dessa empresa. Por se tratar de serviço terceirizado, não conseguimos identificar com precisão o motivo do problema. Reforçamos que as faturas também são enviadas mensalmente por e-mail e ficam disponíveis neste canal de atendimento e no Portal do Cliente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O endereço de cadastro está correto, mas farei a atualização de qualquer forma. Nossa entrega pelos Correios é um serviço terceirizado, então podem ocorrer atrasos no envio das contas. Você pode entrar em contato conosco ou acessar nosso portal para consultar os boletos disponíveis. Gostaria de ter acesso ao Portal do Cliente para consultar e pagar via Pix quando precisar?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você gostaria da 2ª via para pagamento via Pix, boleto (PDF) ou código de barras?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o boleto em maior atraso para pagamento. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue a segunda via do boleto em maior atraso para pagamento. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o boleto solicitado. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o boleto do mês.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o código de barras solicitado. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue abaixo o boleto que causou o bloqueio do seu sinal.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O valor do boleto é de R$88,78. Se pago antes do vencimento, há desconto, por isso normalmente você paga R$79,90. Como o pagamento foi feito após a data de vencimento, o valor não recebe desconto e é cobrado com juros e multa, conforme descrito no boleto. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Agradeço o envio do comprovante de pagamento! 😊 Como o pagamento foi feito após o vencimento, cobramos juros e correção sobre o valor que seria pago pelo código de barras. Preciso que seja realizado o pagamento do valor em aberto de R$2,67 para liberar o seu sinal. Peço que entre em contato conosco antes de fazer transferências para os próximos pagamentos, ou que o pagamento seja feito pelo nosso Portal do Cliente, onde o valor é corrigido automaticamente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Consigo reagendar o pagamento de agosto para a data de setembro, com os juros correspondentes, para que seu sinal permaneça ativo. Podemos fazer dessa forma?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O sistema não permite reagendar o boleto para o mês seguinte. É possível reagendar apenas para o mês do boleto que já foi pago.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não conseguimos parcelar faturas em atraso. Mas, ao pagar o boleto do mês 9, o sinal já se mantém ativo.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O valor é atualizado automaticamente no momento do pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue, como solicitado, a segunda via do boleto referente ao vencimento de [data].</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue a linha digitável do código de barras referente ao vencimento de [data].</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei no sistema que a instalação ocorreu no dia 05/09/2025, com data de vencimento todo dia 11. A primeira mensalidade é cobrada no valor proporcional aos dias utilizados, do dia da ativação até a data de vencimento escolhida. As próximas mensalidades serão no valor total do plano — apenas a primeira é diferente, por causa da data de ativação.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A G6 tem um serviço terceirizado, prestado pelos Correios. Após a chegada nos Correios, a G6 não consegue garantir a data de entrega; por isso, também disponibilizamos a fatura por outros meios, para facilitar. Além do envio do boleto físico, também enviamos mensalmente para o e-mail cadastrado: [e-mail cadastrado] — está correto? Também é possível acessar as faturas e pagar via Pix direto pelo Portal do Cliente. Vou te encaminhar os dados de acesso.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O contrato conosco é mensal; por isso, os boletos chegam dessa forma mesmo.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-pagamento-via-pix" style=""><h3><span class="n">02</span> Pagamento via Pix</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o código Copia e Cola para pagamento via Pix. Por favor, utilize o código inteiro na opção Copia e Cola do Pix.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A G6 desativou a chave Pix para pagamento. Para pagar via Pix, é necessário gerar o QR Code, disponível apenas em nosso site: https://portal.g6internet.com.br/auth/login
+Login:
+Senha:
+Segue um passo a passo.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">MATRIZ – PIX: Para pagamento dessa fatura, você pode utilizar a chave e-mail abaixo: jaqueline.oliveira@g6internet.com.br
+Valor a ser enviado, com juros e multa atualizados até hoje: R$102,60
+As próximas faturas devem ser pagas normalmente pelo portal, já que esta chave não dá baixa automática no financeiro. Neste caso específico, faremos a baixa manualmente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">FILIAL – PIX: Para pagamento dessa fatura, você pode utilizar a chave CNPJ abaixo: 27751234000208
+Valor a ser enviado, com juros e multa atualizados até hoje: R$96,31
+As próximas faturas devem ser pagas normalmente pelo portal, já que esta chave não dá baixa automática no financeiro. Neste caso específico, faremos a baixa manualmente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Acabei de verificar e o código está ativo e funcionando corretamente. Peço que tente outro banco, ou você pode efetuar o pagamento em uma lotérica ou em nosso escritório. Também temos a opção via Pix em nosso Portal do Cliente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você poderia gerar um novo comprovante do pagamento? Como consta "em processamento" no comprovante enviado, não consigo realizar a liberação com este documento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você poderia encaminhar o comprovante de pagamento, por gentileza? 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você poderia enviar o comprovante completo, com os dados do pagamento, por gentileza?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você poderia enviar um print da mensagem que aparece quando tenta efetuar o pagamento?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Esse é o comprovante de agendamento. Poderia, por gentileza, me encaminhar o comprovante do valor já debitado?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Muito obrigada pelo envio do comprovante! Estamos dando baixa no seu pagamento. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Caso o pagamento tenha sido realizado pelo aplicativo do Serasa, é preciso aguardar até que ele conste em nosso sistema. Peço que aguarde até amanhã; caso não conste, entro em contato novamente. Reforçamos que os pagamentos sejam feitos diretamente em nosso portal, para evitar esse tipo de situação. ☺️</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Já realizei a liberação do seu sinal. Como o pagamento foi feito pelo aplicativo do Serasa, é preciso aguardar, pois ele não é registrado de forma imediata em nosso sistema. Caso ocorra bloqueio novamente amanhã, peço que envie o comprovante para uma nova liberação. Reforçamos que os pagamentos sejam feitos diretamente em nosso portal, para evitar esse tipo de situação. ☺️</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">MENSAGEM DE SÁBADO
+Como o pagamento foi realizado no sábado, o banco ainda não nos repassou o valor, e por isso sua conexão foi bloqueada. Vou realizar o desbloqueio de confiança, válido até amanhã às 10h, para dar tempo do banco repassar o pagamento e a conexão não ser bloqueada novamente. Tudo bem? 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como hoje não é considerado dia útil pelos bancos, o pagamento pode ser feito via Pix ou agendado para segunda-feira. É por isso que você não está conseguindo concluir a operação, certo?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o código Copia e Cola para pagamento via Pix, referente à mensalidade de [mês]. Favor utilizar o código inteiro na opção Copia e Cola do Pix, e não apenas o link azul.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Assim que realizar o pagamento, me envie o comprovante para que eu possa desbloquear o seu sinal.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Perfeito, obrigado(a)! Identifiquei o comprovante enviado e irei anexá-lo em nosso sistema.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A G6 desativou a chave Pix para pagamento. Para pagar via Pix, é necessário gerar o QR Code, disponível apenas em nosso site: https://portal.g6internet.com.br
+Usuário:
+Senha:</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Por segurança, será necessária a confirmação em duas etapas. Você pode escolher receber o token por SMS ou por e-mail. O envio pode levar cerca de 1 minuto para chegar.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A fatura com vencimento em 26/09/2025 perdeu o registro bancário por ultrapassar 60 dias de atraso, e foi reagendada para o dia 07/12/2025, para que você consiga realizar o pagamento via Pix. Segue o link para acessar a fatura e efetuar o pagamento: https://portal.g6internet.com.br/facilita-totem</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Certo. Pelo que identifiquei no sistema, o Pix era realizado pela chave que correspondia ao nosso CNPJ. Todo Pix feito dessa forma precisava do envio do comprovante com o nome do titular e o nome da conta usada no pagamento, já que a baixa era manual. Como nem sempre os clientes enviavam o comprovante, não conseguíamos identificar quem havia pago. Por isso, a diretoria decidiu retirar essa chave e criar um sistema em que os clientes pudessem pagar via Pix de forma segura, com o valor caindo imediatamente em nosso sistema.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei junto ao financeiro que o valor está incompleto, pois o atraso gerou cobrança de juros no valor de R$ ____. Para que possamos dar baixa no boleto, é necessário efetuar o pagamento do valor restante. Você poderia realizar esse complemento, por gentileza?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Chaves Pix por regional:
+WAY: 21.064.515/0001-25 — Gonçalves, São Bento do Sapucaí, Sapucaí Mirim, Osório
+SBS: 04705363000183 — Cachoeira de Minas, Conceição dos Ouros, Paraisópolis, Pouso Alegre (Cidade Jardim)
+Matriz: jaqueline.oliveira@g6internet.com.br — cidades de Minas Gerais
+Filial: 27751234000208 — cidades de São Paulo</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">No momento não será possível realizar o pagamento via Pix. Estamos com uma instabilidade em nosso Portal do Cliente hoje, no sistema onde o pagamento via Pix é realizado. Estamos abrindo uma exceção para essa instabilidade e posso te enviar uma chave Pix temporária para que você consiga efetuar o pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">No momento não será possível realizar o pagamento via Pix. Estamos com uma instabilidade em nosso Portal do Cliente hoje, no sistema onde o pagamento via Pix é realizado. Gostaria de realizar o pagamento ainda hoje? Posso te enviar a linha digitável do código de barras. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos com uma intercorrência em nosso site de pagamento. Já estamos em contato com os responsáveis para resolver o quanto antes. Pedimos desculpas pelo transtorno — você poderá realizar o pagamento um pouco mais tarde.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente ainda não foi resolvida a instabilidade em nosso Portal do Cliente. Peço desculpas pelo transtorno. Vou te enviar uma chave Pix temporária para que você consiga pagar a mensalidade. Para essa fatura, você pode pagar pela chave e-mail abaixo: jaqueline.oliveira@g6internet.com.br
+Valor a ser enviado, com juros e multa atualizados até hoje: R$ ____ (referente ao vencimento de [data]).</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-bloqueio-e-desbloqueio-de-sinal" style=""><h3><span class="n">03</span> Bloqueio e Desbloqueio de Sinal</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, a conexão foi bloqueada.
+Consegui desbloquear sua conexão, que ficará liberada até amanhã às 10h. Caso efetue o pagamento da fatura em atraso ainda hoje, não há risco de um novo bloqueio.
+Em poucos minutos o sinal já estará ativo.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que estão em aberto o boleto com vencimento em 26/05/2021 e o boleto com vencimento em 26/06.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Vamos bloquear seu acesso por 120 dias. Nesse período, você não utilizará o serviço e não haverá cobrança — será cobrado apenas o valor proporcional de utilização até hoje e após o desbloqueio. Sua conexão será bloqueada assim que recebermos o termo assinado novamente. A cobrança volta a contar somente a partir da data de desbloqueio informada no termo ou a qualquer momento em que você solicitar o desbloqueio antecipado. Você pode solicitar esse bloqueio apenas uma vez a cada 12 meses.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para realizarmos o bloqueio temporário do seu sinal, é necessário que todos os pagamentos estejam em dia. Caso já tenha pago os boletos em atraso, peço, por gentileza, que nos envie o comprovante para darmos continuidade ao atendimento. 😊 Após a baixa dos pagamentos, enviarei um termo para assinatura online, tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente o desbloqueio de confiança pode ser feito apenas uma vez. Depois de utilizado, não é possível uma nova liberação — apenas mediante o pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Consigo realizar o desbloqueio de confiança uma vez por mês em nosso sistema. Acabei de verificar que ele já foi utilizado neste mês, então a liberação agora só pode ocorrer mediante o comprovante de pagamento. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não conseguimos realizar um segundo desbloqueio de confiança — o sistema não permite. A liberação, neste caso, só é possível mediante o comprovante de pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como o desbloqueio de confiança foi liberado ontem, infelizmente o sistema não permite uma segunda liberação nesse modo — apenas mediante o comprovante de pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não é possível prolongar a data do desbloqueio de confiança. Após o vencimento, a G6 segue as normas da ANATEL e oferece 30 dias para o pagamento do boleto em atraso; depois desse prazo, é feito o bloqueio e, então, o desbloqueio de confiança, para que o cliente tenha acesso à internet e possa efetuar o pagamento e enviar o comprovante. Após esse período, o sistema bloqueia automaticamente e não conseguimos alterar novamente — apenas mediante o comprovante de pagamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A mudança se refere às novas normas da ANATEL. Como a pendência do mês 6 ultrapassou 15 dias após o vencimento, o sinal foi bloqueado neste mês — a aplicação da norma de bloqueio em 15 dias após o vencimento começou a valer agora. Posso realizar a liberação de confiança até amanhã às 10h; você gostaria?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A nova regra de bloqueio da ANATEL prevê 15 dias após o vencimento. Estávamos concedendo 30 dias para dar tempo aos clientes de regularizarem os débitos, e este mês o prazo foi ajustado para o previsto.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Essa nova regra foi definida pela ANATEL e já vínhamos informando há um tempo em nossos canais de comunicação. O ajuste começou a valer em 1º de junho, com bloqueio em até 15 dias após o vencimento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Consegui verificar com minha supervisora e conseguimos liberar até amanhã. Reforçamos que esta é uma liberação especial — nos próximos meses, infelizmente, não será possível repetir essa liberação. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Posso fazer o desbloqueio de confiança até amanhã às 10h, mas infelizmente não consigo liberar até a data que você solicitou, pois o bloqueio é feito automaticamente pelo nosso sistema.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Identificamos um rompimento de fibra na sua região, por isso o sinal pode estar instável. Nossos técnicos já estão trabalhando nisso, e em até 3 horas tudo deve estar normalizado. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos enfrentando uma falha massiva na região. Nossa equipe técnica já está trabalhando para resolver o problema o mais rápido possível. A previsão de normalização é de aproximadamente 3 horas. Agradecemos a compreensão e pedimos desculpas pelo transtorno.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Poderia, por favor, reiniciar o roteador e verificar se a conexão retorna? Muitas vezes esse procedimento já resolve a instabilidade. Caso o problema persista, nos avise para continuarmos o suporte.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Para a liberação do seu sinal, é necessário o pagamento destes dois boletos:</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Para a liberação do seu sinal, é necessário também o pagamento deste boleto:</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Ao pagar o boleto em maior atraso, já consigo realizar a liberação do seu sinal. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Ao pagar o boleto do mês [ ], basta enviar o comprovante de pagamento que já realizamos a liberação do seu sinal. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Perfeito! O sinal consta como ativo em nosso sistema. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style=""><div class="text" contenteditable="true" spellcheck="true">Eu acabei de efetuar a liberação do seu sinal. Peço que aguarde 5 minutos para que a conexão seja restabelecida. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Já realizei o desbloqueio do seu sinal. Em alguns minutos, sua conexão estará ativa. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, a conexão foi bloqueada. Você gostaria da liberação de confiança até amanhã às 10h?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O bloqueio do acesso ocorre devido a uma pendência financeira em aberto. Para não gerar mais valores, o acesso fica interrompido até a normalização dos pagamentos.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Ocorreu o bloqueio do sinal devido à falta de pagamento referente ao boleto vencido em 17/01. Há sempre 45 dias de tolerância de atraso antes do bloqueio de acesso.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não vou conseguir liberar, pois o sistema não está permitindo, já que o desbloqueio foi realizado no dia 01/07/2026. O desbloqueio é permitido apenas uma vez; depois disso, o sistema não permite um novo desbloqueio. A liberação, agora, só será possível mediante a baixa bancária do boleto em aberto.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não consigo segurar até o dia 01 — automaticamente, o sistema bloqueia com 15 dias de atraso. O que posso fazer, assim que ocorrer o bloqueio, é liberar; porém, no dia seguinte, por volta das 10h, haverá o rebloqueio. Depois disso, só conseguimos liberar com o comprovante de pagamento de março, pois é necessário anexá-lo ao sistema. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Perfeito, obrigado(a)! Realizei o desbloqueio da sua conexão. Seu acesso voltará em instantes.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Identifiquei o comprovante enviado, obrigado(a)! Realizei o desbloqueio da sua conexão. Seu acesso voltará em instantes.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Identificamos uma falha massiva na sua região. Nossa equipe já está se deslocando ao local com máxima urgência para a solução do problema. Pedimos que aguarde um prazo de três horas para o restabelecimento do acesso, podendo normalizar antes disso. Desculpe-nos pelo transtorno.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">BLOQUEIO ADMINISTRATIVO
+Vamos bloquear seu acesso por, no mínimo, 30 dias e, no máximo, 120 dias. Nesse período, você não utilizará o serviço e não haverá cobrança — será cobrado apenas o proporcional de utilização até hoje e após o desbloqueio. Para solicitar o bloqueio, não pode haver nenhum boleto em aberto.
+Para o procedimento, enviaremos um link para assinatura digital. A cobrança volta a contar somente após a data de desbloqueio especificada no termo, ou a qualquer momento em que você solicitar o desbloqueio da conexão — nesse caso, a cobrança passa a partir desse momento. Você pode solicitar esse bloqueio apenas uma vez a cada 12 meses.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-mudanca-de-comodo" style="display: none;"><h3><span class="n">04</span> Mudança de Cômodo</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que você solicitou uma mudança de cômodo. Para esse serviço, há uma taxa de R$100,00 + metragem de cabo utilizada (R$3,00/metro).
+Poderia me informar em qual cômodo o equipamento está instalado atualmente e para qual deseja transferi-lo?
+Assim que confirmar, abro sua solicitação no sistema, e o setor de agendamentos entrará em contato em até 48 horas para marcar a visita. Tudo bem? 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A solicitação foi aberta. O setor de agendamento entrará em contato em até 48h para marcar a alteração — mas fique tranquilo(a), entraremos em contato o mais rápido possível.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Após a instalação do equipamento, qualquer solicitação de mudança de cômodo está sujeita à cobrança de uma taxa adicional. Essa política é aplicada a todos os clientes.
+No dia da instalação, nossos técnicos fazem toda a verificação técnica e confirmam o local ideal com o responsável presente, garantindo que o equipamento seja instalado no ambiente mais adequado para o seu funcionamento.
+Caso haja necessidade de mudança após essa confirmação, é preciso acionar uma equipe especializada de uma empresa terceirizada para realizar o serviço com segurança e qualidade. Por esse motivo, a taxa é gerada — ela cobre os custos operacionais dessa nova visita e a execução do trabalho.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Entendo. A taxa é gerada porque é necessário acionar uma equipe especializada de uma empresa terceirizada para realizar o serviço com segurança e qualidade. Ela cobre os custos operacionais dessa nova visita e a execução do trabalho, certo?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Mudança de cômodo + rede interna: valor fixo de R$200,00 + R$3,00 por metro de cabo utilizado. Acrescenta-se R$60,00 por ponto de rede interna adicional.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como a instalação no novo local para o plano com TV é mais delicada, temos um custo para essa instalação, pois a empresa responsável pelo serviço é terceirizada. Por isso, esse é o valor.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como a alteração exige o envio de uma equipe, temos um custo, pois a empresa responsável pelo serviço é terceirizada. Por isso, esse é o valor.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para a mudança de cômodo, é cobrada uma taxa de R$100,00, lançada junto com a mensalidade da internet após a realização do serviço.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para esse serviço, é cobrada uma taxa de R$100,00 e, caso a distância entre o ponto antigo e o novo ultrapasse 5 metros, é cobrado também R$3,00 por metro de cabo utilizado. Essa taxa é lançada no próximo vencimento.
+Se desejar seguir com o serviço, me informe, por gentileza, de qual cômodo será retirado o ponto principal, para qual será transferido, e se a residência possui rede interna.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Assim que você me enviar essas informações, consigo abrir a solicitação. Depois, é só aguardar: a equipe de Agendamentos entra em contato para marcar a melhor data para a realização do serviço.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Sua solicitação já foi registrada em nosso sistema. Em breve, nossa equipe entrará em contato para agendar o dia e o período da instalação. Esse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o possível para atender o mais rápido possível!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">SERVIÇOS COM WATCH — Mudança de Cômodo: R$100,00 (verificar se todos os pontos são cabeados).</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-mudanca-de-endereco" style="display: none;"><h3><span class="n">05</span> Mudança de Endereço</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">MUDANÇA DE ENDEREÇO
+🏡 Para a mudança de endereço, é necessário que não haja nenhuma fatura vencida em aberto. Caso esteja tudo certo, envie o novo endereço completo para que possamos continuar com a solicitação. Se houver alguma fatura vencida em aberto, basta realizar o pagamento e nos enviar o(s) comprovante(s) para darmos continuidade. Combinado? 😃
+
+A mudança de endereço é feita da seguinte forma:
+➡️ Envio o termo de solicitação de mudança de endereço para assinatura.
+➡️ Após assinado, abro a solicitação para que nossa equipe verifique a viabilidade no novo endereço.
+➡️ Confirmada a viabilidade, nossa equipe de Agendamentos entra em contato para marcar a melhor data para a mudança.
+
+Esse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o mais breve possível. 🙌
+
+Importante: pedimos, por gentileza, que leve os equipamentos da internet da residência atual para o novo local, pois os técnicos irão instalá-los lá. Combinado? 😉
+
+Se estiver tudo certo, envie os seguintes dados:
+Rua:
+Bairro:
+Número e complemento (apto/bloco/andar):
+Complemento:
+Cidade:
+CEP:
+Ponto de referência (se houver):
+
+Dados do titular do contrato:
+E-mail:
+Telefone/WhatsApp:
+
+💰 É cobrada uma taxa de R$150,00. Essa taxa é lançada no próximo vencimento e pode ser dividida em até 3x. Tudo bem? (Me informe, por gentileza, se prefere em 1x, 2x ou 3x.)</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como já houve uma mudança de endereço anterior sem cobrança de taxa, desta vez será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 2x, se preferir. Esse valor virá em fatura avulsa, para o próximo mês.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">R$200,00 para cliente WATCH com STB. Caso haja STB em comodato em outros pontos, acrescenta-se R$60,00 por equipamento.
+Sem STB, na mudança apenas da internet, a taxa é de R$130,00 (o Watch permanece instalado na TV).</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Pelo endereço informado, não conseguimos identificar o local exato. Por isso, não é possível verificar a cobertura e dar continuidade à mudança. Poderia enviar a localização exata (o ponto no Google Maps ou a localização pelo WhatsApp)?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Mudança de endereço + rede interna: R$250,00.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como a solicitação foi feita hoje, nossa equipe está verificando a viabilidade técnica no novo endereço. Assim que tivermos a confirmação, o time de Agendamentos entrará em contato para marcar a melhor data para a mudança.
+Esse processo pode levar até 48 horas, mas fique tranquilo(a): estamos agilizando tudo. 🙌
+Não se esqueça de levar os equipamentos da internet para o novo local, pois os técnicos irão utilizá-los na instalação. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">SOLICITAÇÃO ABERTA
+Sua solicitação foi aberta no sistema. Vamos verificar a disponibilidade de instalação no novo endereço e, em seguida, você receberá uma mensagem para agendar a instalação. Esse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o mais breve possível.
+Importante: pedimos, por gentileza, que leve os equipamentos da internet da residência atual para o novo local, pois os técnicos irão instalá-los lá. Combinado?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como a viabilidade ainda não foi concluída, é necessário aguardar — mas ainda hoje entraremos em contato, combinado?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Após a assinatura do contrato, abrimos a solicitação para que nossa equipe verifique a viabilidade no endereço. Confirmada a viabilidade, nossa equipe de Agendamentos entra em contato para marcar a melhor data e período para a instalação. 😊 O prazo para o contato é de 48h, mas fique tranquilo(a): faremos o mais rápido possível.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">📝 Me envie, por gentileza, os seguintes dados:
+
+Localização pelo Google Maps (indispensável em endereços rurais ou de difícil localização)
+Nome da rua:
+Bairro:
+Nº:
+Complemento (se prédio: nº do apartamento, bloco e andar):
+Cidade:
+CEP:
+Ponto de referência:
+Telefone:</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como seu cadastro tem menos de 12 meses de ativação, será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 3x, se preferir. Esse valor vem em fatura avulsa, para o próximo mês.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como foi solicitada uma mudança de endereço com menos de 12 meses de contrato, será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 3x, se preferir. Esse valor vem em fatura avulsa, para o próximo mês.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para este serviço, é cobrada uma taxa de R$150,00 para clientes que possuem apenas internet, e de R$200,00 para clientes com combo internet + TV (mais R$60,00 por ponto adicional). Podemos dividir em até 3 vezes, se preferir.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Identifiquei que existe uma pendência financeira neste contrato. Por esse motivo, infelizmente não será possível prosseguir com a solicitação de mudança de endereço. Assim que o pagamento das mensalidades pendentes for realizado, poderemos dar continuidade ao atendimento. Caso já tenha efetuado o pagamento, poderia me enviar o comprovante, por gentileza, para que eu possa prosseguir com a sua solicitação?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">✨ Passo a passo para enviar a localização:
+- É importante estar dentro da residência no momento do envio.
+- Toque no 📎 (o mesmo ícone usado para gravar áudio no WhatsApp).
+- Toque em Localização.
+- Toque em Localização atual.
+
+✅ Pronto — localização enviada!
+📍 Só são aceitas localizações enviadas dessa forma.
+
+Assim que você enviar, aguarde: vou encaminhar ao setor de viabilidade e dar continuidade ao seu atendimento. Combinado?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">SERVIÇOS COM WATCH — Mudança de Endereço:
+R$170,00 para cliente WATCH com STB. Se houver STB em comodato em outros pontos, acrescenta-se R$40,00 por equipamento.
+Sem STB, na mudança apenas da internet, a taxa é de R$130,00 (o Watch permanece instalado na TV).</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-troca-de-titularidade" style="display: none;"><h3><span class="n">06</span> Troca de Titularidade</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para fazer a alteração, preciso dos dados do novo titular, para verificar se o sistema aprova o CPF. Se aprovado, faremos o cadastro. Tanto o titular atual quanto o novo titular devem assinar o termo. Os termos podem ser assinados presencialmente em nosso escritório, ou posso enviá-los por e-mail para assinatura digital. Qual forma você prefere?
+
+Importante!
+📝 Só é possível prosseguir com a solicitação com todos os boletos vencidos pagos.
+
+Lembrando que só conseguimos continuar a solicitação após os dois contratos serem assinados digitalmente corretamente.
+
+➡️ Com os documentos assinados, abriremos a solicitação de troca de titularidade, e o sistema leva cerca de 48 horas para concluir a troca.
+
+Vou precisar destes dados do novo titular para elaborar o termo de transferência:
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+
+Após o envio desses dados, poderei dar continuidade à sua solicitação.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Durante a análise de crédito, identificamos que não foi possível aprovar o CPF informado no momento. Para dar continuidade ao processo, sugerimos indicar um novo titular.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Lamentamos informar que, após a análise financeira do CPF do novo titular, ele não foi aprovado em nossa análise de crédito. Por esse motivo, não será possível realizar a transferência de titularidade.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">🔄 Os dados que precisarei do novo titular são:
+- Nome completo
+- CNPJ
+- Razão social
+- E-mail
+- Telefone
+
+Será necessário que uma pessoa física seja autorizada a assinar em nome da empresa. Segue os dados necessários para o cadastro:
+Importante: é necessário que seja um dos sócios ou o diretor mencionado no contrato social.
+
+CPF:
+Identidade:
+Nome:
+Telefone:
+Celular:
+E-mail:
+Cargo ocupacional:</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei em nosso sistema e não consta contrato no CNPJ informado. Poderia confirmar se está registrado em outro CNPJ ou CPF?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Já caiu a assinatura em nosso sistema. Vou avisar a atendente anterior para que dê continuidade à sua solicitação, ok?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Recebi a sua assinatura, e a solicitação de troca de titularidade foi aberta. O sistema leva cerca de 48 horas para concluir a troca. Assim que finalizarmos, entro em contato novamente. 😉</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você gostaria de verificar a mudança de titularidade para quem vai ficar no local, ou verificar se atendemos no novo endereço?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Identifiquei que constam dois contratos neste CPF. Poderia me informar qual é o endereço, por gentileza?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">A transferência de titularidade ocorre da seguinte forma:
+➡️ Faço o cadastro do novo titular.
+➡️ Verificamos se é possível realizar a transferência para o novo titular.
+➡️ Confirmada a possibilidade, envio os documentos para assinatura digital, tanto para o titular atual quanto para o novo:
+- o titular atual recebe o termo de cancelamento do contrato, por motivo de transferência de titularidade;
+- o novo titular recebe o termo de ativação, no mesmo número do contrato do titular atual.
+
+Lembrando que só conseguimos continuar a solicitação após os dois contratos serem assinados digitalmente e corretamente.
+
+➡️ Com os documentos assinados, abriremos a solicitação de troca de titularidade, e o sistema leva cerca de 48 horas para concluir a troca.
+
+⚠️ Requisito: para seguirmos com essa alteração, é necessário o pagamento de todas as faturas vencidas.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Explicação simples (caso o cliente não entenda): para fazer a alteração, preciso dos dados do novo titular, para verificar se o sistema aprova o CPF. Se aprovado, faremos o cadastro. O titular atual deve assinar o termo de cancelamento, e o novo titular, um termo de contratação. Os termos podem ser assinados presencialmente no escritório, ou posso enviá-los por e-mail ou WhatsApp para assinatura digital. Qual forma você prefere?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não conseguiremos prosseguir com a troca de titularidade, pois o CPF não foi aprovado em nossa análise de crédito.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-cancelamento" style="display: none;"><h3><span class="n">07</span> Cancelamento</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Pode me detalhar melhor o que motivou a solicitação de cancelamento do seu serviço, por favor? Assim, consigo entender melhor o seu pedido e ajudar de forma mais rápida e eficaz.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento que está no endereço, caso haja. Não há multa contratual (caso o contrato já tenha mais de 12 meses). Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?
+Obs.: o termo de cancelamento deve ser assinado no mesmo dia do envio do link, pois os valores informados são referentes a essa data de cancelamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento de internet que está no endereço, em até 48 horas após a assinatura (caso haja). Não há multa contratual. Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?
+Obs.: o termo de cancelamento deve ser assinado no mesmo dia do envio do link, pois os valores informados são referentes a essa data de cancelamento.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento que está no endereço. Há multa contratual no valor de R$125,00. Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-assinatura-digital-e-termos" style="display: none;"><h3><span class="n">08</span> Assinatura Digital e Termos</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O link para assinatura foi enviado via ClickSign, para você e para o atual titular. O termo chegará em uma conversa do WhatsApp.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O link para sua assinatura foi enviado via ClickSign. O termo chegará em uma conversa do WhatsApp.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O link para sua assinatura foi enviado via ClickSign. O termo chegará por e-mail para vocês.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Segue o link para assinatura. Por favor, atente-se para fazer a assinatura o mais parecida possível com a do seu documento. A foto solicitada no momento da assinatura deve ser sua, segurando o documento. Assim que concluir, me avise para que eu possa dar continuidade à sua solicitação.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Passo a passo da assinatura:
+♦️ Clique no link — ele precisa estar azul.
+♦️ Quando o contrato aparecer na tela, toque em ASSINAR.
+♦️ Toque em AVANÇAR para iniciar a assinatura.
+♦️ Tire uma selfie com o documento em mãos, próximo ao rosto.
+♦️ Toque em AVANÇAR.
+♦️ Assine com o dedo na tela do celular.
+♦️ Toque em AVANÇAR.
+♦️ Você receberá um token de 6 letras no seu e-mail.
+♦️ Digite o código na tela do contrato e toque em ENCERRAR.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-planos-e-valores" style="display: none;"><h3><span class="n">09</span> Planos e Valores</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">🤩 Os planos de acesso Fibra Óptica são:
+📌 300 Mega – R$79,90
+📌 700 Mega – R$99,90
+📌 1 Giga – R$159,90</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Planos para CNPJ:
+300 Mega – R$100,00
+700 Mega – R$125,00
+1 Giga – R$200,00</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">📶 300 Megas – R$79,90
+📶 700 Megas – R$99,90
+📶 1 Giga – R$159,90
+
+Rádio 4M: R$99,90 (ou R$100,00, podendo dividir em 2x)
+
+Combo Essencial + 300/450 Megas – R$109,00
+Combo Essencial + 700 Megas – R$139,00
+Combo Essencial + 1 Giga – R$199,00
+
+Cidades: Piquete, Lorena, Guará, Pindamonhangaba, Canas e Campos do Jordão
+450 Mega – R$79,90
+700 Mega – R$99,90
+1000 Mega – R$149,90
+
+1 STB em comodato + taxa de ativação de R$60,00 + metragem de cabo (para TVs digital/tubo). Ponto adicional: R$29,90 + ativação e cabo.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para alterar o plano/velocidade, é necessário que todas as contas vencidas estejam quitadas. Se estiver tudo em dia, consigo dar continuidade à sua solicitação agora mesmo. Se houver boletos vencidos em aberto, assim que realizar o pagamento, basta enviar o comprovante para prosseguirmos.
+Além disso, a alteração exige a assinatura de um termo, que pode ser enviado para assinatura digital online ou assinado presencialmente em nosso escritório (também de forma digital).</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para realizarmos a alteração no seu plano, é necessário que todos os pagamentos estejam em dia. Será preciso assinar novamente o termo de adesão, já que essa mudança renova a fidelidade do contrato por mais 12 meses. A nova promoção é válida por 6 meses; após esse período, a mensalidade passa a ser de R$79,90 para 450 Mega.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Atualmente, seu plano de internet é de 300 Mega, com mensalidade de R$79,90.
+Caso deseje adicionar um dos planos de TV (Power, Power + Sports ou Power Supercompleto), o valor será somado à mensalidade atual:
+📺 Plano Power: R$79,90 (internet) + R$69,90 (TV) = R$149,80/mês
+📺 Plano Power + Sports: R$79,90 (internet) + R$79,90 (TV) = R$159,80/mês
+📺 Plano Power Supercompleto: R$79,90 (internet) + R$89,90 (TV) = R$169,80/mês
+Se tiver interesse ou quiser mais informações, estamos à disposição! 💬</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Não, o roteador é o mesmo para todos os planos. Ele já suporta até 1 Giga. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">FIBRA ÓPTICA + TV
+Escolha seu plano de internet ou monte seu pacote com canais de TV:
+300 Mega – R$79,90 · Power – R$69,90
+700 Mega – R$99,90 · Power Sports – R$79,90
+1000 Mega – R$159,90 · Power Completo – R$89,90
+
+Exemplo: 300 Mega + Power Sports = R$159,80
+
+Combos Essenciais:
+Combo Essencial + 300/450 Mega – R$109,00
+Combo Essencial + 700 Mega – R$139,00
+Combo Essencial + 1 Giga – R$199,00
+
+Obs.: os planos já incluem aplicativos de livros, revistas e armazenamento em nuvem.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Para TVs Smart fabricadas a partir de 2020 e compatíveis com o aplicativo, é necessário apenas baixar e configurar o app. Caso la TV não seja compatível, será necessária a instalação de um STB (conversor); nesse caso, é cobrada uma taxa de instalação de R$60,00, além da metragem de cabo, se necessária.
+A contratação do serviço de TV também tem fidelidade de 12 meses, assim como os demais serviços.
+A grade de canais de cada combo pode ser consultada em nosso site: https://www.g6internet.com.br/</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-alteracao-de-velocidade-e-data-de-vencimento" style="display: none;"><h3><span class="n">10</span> Alteração de Velocidade e Data de Vencimento</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">ALTERAÇÃO DE DATA DE VENCIMENTO
+Datas disponíveis: 01, 06, 11, 16, 21 e 26.
+
+Para alterar a data de vencimento, é necessário que todas as contas vencidas estejam quitadas. Se estiver tudo em dia, consigo dar continuidade à sua solicitação agora mesmo. Se houver boletos vencidos em aberto, assim que o pagamento for feito, basta nos enviar o comprovante para darmos continuidade.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Vamos gerar um termo, e a alteração só será feita após a assinatura dele.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Após a alteração da data de vencimento, o boleto do próximo mês será no valor proporcional à mudança de data. Os demais meses voltam a ser no valor total do plano.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">ALTERAÇÃO DE VELOCIDADE
+Para realizarmos a sua solicitação de alteração de velocidade, preciso que você assine um termo autorizando o procedimento. Assim que a assinatura for feita, consigo realizar a alteração. Vou te enviar um link para a assinatura digital, tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">⚠️ Importante! As faturas precisam estar em dia para que o sistema permita abrir a solicitação.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, não conseguiremos prosseguir com a alteração de velocidade, pois o sistema não permite alterações com mensalidade pendente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O valor do próximo boleto será proporcional aos dias usados em cada plano, e os seguintes já virão no valor do novo plano. Combinado?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-migracao-de-tecnologia-radio-fibra" style="display: none;"><h3><span class="n">11</span> Migração de Tecnologia (Rádio → Fibra)</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O serviço de internet via rádio que você utiliza está sendo gradativamente interrompido, pois não será mais oferecido no seu bairro. Precisamos realizar a alteração do seu plano o quanto antes, já que a torre de atendimento via rádio será desativada. Por gentileza, escolha um plano na fibra óptica para que possamos enviar o documento de alteração, e nossa equipe técnica vá até o seu endereço realizar a troca da tecnologia da internet. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-rede-interna-e-pontos-adicionais" style="display: none;"><h3><span class="n">12</span> Rede Interna e Pontos Adicionais</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">1 ponto: R$100,00 + metragem de cabo
+2 pontos: R$160,00 + metragem de cabo
+3 pontos: R$220,00 + metragem de cabo
+4 pontos: R$280,00 + metragem de cabo
+5 pontos ou mais: necessária vistoria — encaminhar para o Suporte.
+
+Rede interna e mudança de cômodo: a G6 realiza o serviço — encaminhar para o setor de Pós-venda (mudança de cômodo) ou Suporte (rede interna).
+Ativação com serviço de rede interna: realizada pela G Force.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">PONTO ADICIONAL DE TV
+O ponto adicional tem um custo de R$60,00 pela instalação do equipamento, mais R$3,00 por metro de cabo, considerando a distância do roteador até a TV.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">REDE INTERNA
+É a ligação por cabo de rede desde o nosso equipamento principal até o local onde será feito o novo ponto. O cabo pode ser conectado a outro roteador ou direto a um dispositivo, como um computador.
+Se for ligar em um roteador, será necessário adquiri-lo — e, para que toda a banda seja transmitida, ele precisa ter especificação Gigabit.
+O valor do serviço depende da quantidade de pontos de rede: para um ponto, o valor é de R$100,00 + metragem de cabo (R$3,00 o metro). Após o pagamento do serviço, volta-se a pagar apenas o valor da mensalidade.
+
+1 ponto: R$100,00 + metragem de cabo
+2 pontos: R$160,00 + metragem de cabo
+3 pontos: R$220,00 + metragem de cabo
+4 pontos: R$280,00 + metragem de cabo
+5 pontos ou mais: necessária análise</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">VALORES DE SERVIÇOS
+🔸 Mudança de cômodo + rede interna: valor fixo de R$200,00 + R$3,00 por metro de cabo utilizado. Acrescenta-se R$60,00 por ponto de rede interna.
+🔸 Mudança de endereço + rede interna: valor fixo de R$250,00 + R$3,00 por metro de cabo utilizado.
+🔸 Reinstalação: R$100,00</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">PONTO ADICIONAL
+Para o ponto adicional de TV, preciso que você me informe se a outra TV é Smart.
+Se for, instalamos o aplicativo G6 diretamente nela.
+Caso a TV seja de tubo ou digital, será necessária a instalação de um técnico até a residência para instalar um novo equipamento, com custo de R$60,00 pela instalação + R$29,90 mensais + metragem de cabo, se necessária.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-rede-mesh" style="display: none;"><h3><span class="n">13</span> Rede Mesh</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">REDE MESH
+Para contratar este serviço, é necessário assinar o termo de adesão, com fidelidade de 12 meses. O valor mensal é de R$19,90, cobrado além da mensalidade do plano já contratado. Não há taxa para a ativação.
+Caso seja necessário cabear até o segundo roteador, é cobrado R$3,00 por metro de cabo, mais R$100,00 referente ao valor do serviço.
+Após a assinatura do termo, abrirei a solicitação, e o setor de agendamento entrará em contato em até 48h para marcar a instalação, combinado?
+Caso seja necessário cabear a rede mesh para outros locais, também será cobrada a taxa de serviço de R$100,00 + metragem.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">REDE MESH
+Para contratar este serviço, é necessário assinar o termo de adesão, com fidelidade de 12 meses. O valor mensal é de R$19,90, cobrado além da mensalidade do plano já contratado. Não há taxa para a ativação, e não pode haver boleto em aberto.
+Após a assinatura do termo, abrirei a solicitação, e o setor de agendamento entrará em contato em até 48h para marcar a instalação. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-ip-fixo-e-equipamentos" style="display: none;"><h3><span class="n">14</span> IP Fixo e Equipamentos</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Conseguimos disponibilizar o IP Fixo. Para isso, é gerado um termo, com assinatura por link (que posso enviar por aqui) ou presencialmente em nosso escritório. O valor do IP Fixo é de R$30,00, acrescido nas mensalidades futuras.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Como o equipamento está em comodato, para a troca da fonte é necessário que o(a) titular assine um termo. O valor é de R$20,00, que pode ser pago via Pix ou presencialmente em nosso escritório. Como prefere fazer?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Vou transferir seu atendimento para o setor responsável, para verificarem a situação do roteador e confirmar se realmente queimou. Caso tenha queimado ou sofrido outro dano que comprometa o uso, conseguimos deixar outro aparelho em comodato em sua residência, sendo cobrado o valor referente ao aparelho anterior, que ficará em desuso.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Conforme informado, para realizarmos a troca do equipamento, será necessário assinar um termo de comodato. O pagamento deve ser feito via Pix e, após a confirmação, o setor técnico irá até a residência para entregar o aparelho. Tudo bem?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-explicacoes-tecnicas" style="display: none;"><h3><span class="n">15</span> Explicações Técnicas</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O roteador pode até transmitir mais velocidade, mas isso depende dos equipamentos receptores. Em geral, ele transmite até 300 Mb, podendo passar mais. Computador e celular também precisam ser compatíveis para receber mais mega: às vezes o roteador transmite 350 Mb, mas se o celular for de tecnologia 2.4 GHz, ele receberá no máximo 50 Mb, dependendo da interferência no local. Para receber mais de 100 Mb, os equipamentos precisam ter tecnologia 5G.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-aplicativos-svas-skeelo-cloud-e-cdn-tv" style="display: none;"><h3><span class="n">16</span> Aplicativos (SVAs — Skeelo, Cloud e CDN TV)</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">APLICATIVOS
+A G6, dentro do plano de internet contratado, oferece gratuitamente alguns aplicativos: Cloud e Skeelo.
+Por esse motivo, são emitidas notas de débito referentes a esses serviços de valor adicionado, que compõem o pacote contratado. A soma dessas notas corresponde ao total do boleto.
+As notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura.
+Nos próximos meses, você continuará recebendo as notas desses aplicativos quando o pagamento do boleto constar em nosso sistema. Isso não significa que você precisará pagar algo além do seu plano.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você não precisa se preocupar: não está pagando nada a mais além do valor do seu plano de internet. A G6 oferece, gratuitamente, alguns aplicativos junto com o plano, como o Cloud e o Skeelo.
+Por isso, você recebe notas fiscais desses serviços, mas elas não são cobranças extras — são emitidas automaticamente pelo sistema da Prefeitura, apenas para registrar que esses aplicativos fazem parte do seu pacote.
+Ou seja, o valor do seu boleto continua o mesmo, e você não precisa pagar nada além disso. 💙
+Qualquer dúvida, estou à disposição!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">SVAs
+Ao alterar para um plano sem os aplicativos inclusos, o valor da mensalidade permanece o mesmo. Isso ocorre porque o plano contratado tem essa condição, e os aplicativos são oferecidos como benefício, sem custo adicional. Além disso, os planos comercializados sem os aplicativos têm o mesmo valor de mensalidade que você já paga. Por isso, a retirada dos aplicativos não resulta em redução no valor do plano.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">O Skeelo é um aplicativo de leitura de e-books, disponível para Android e iOS. Para utilizá-lo:
+✔️ Baixe o aplicativo
+✔️ Crie uma conta
+✔️ Selecione os gêneros de leitura preferidos
+✔️ Acesse o app, procure o benefício "Skeelo Parcerias" e selecione G6 Internet
+✔️ Navegue até a aba "Meus livros" para ler os títulos liberados
+
+Para ler um livro:
+✔️ Toque sobre o livro
+✔️ Selecione o título desejado
+✔️ Aguarde o download
+✔️ Ajuste o tipo e o tamanho da fonte
+✔️ Altere o tema do aplicativo (dia, noite ou sépia)
+
+📚 O Skeelo também permite marcar páginas, adicionar notas, visualizar a ficha técnica e ver comentários de outros leitores.
+Baixe o aplicativo e boa leitura! 📖</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">CLOUD — tecnologia que permite acesso remoto a softwares, armazenamento de arquivos e processamento de dados pela internet. É uma alternativa para acessar dados importantes de qualquer computador, em qualquer lugar.
+Link de acesso: https://g6.ispdrive.com.br/login
+Login e senha são os mesmos do Portal do Cliente G6.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">SOBRE AS NOTAS FISCAIS
+A G6, dentro do plano de internet fornecido, oferece gratuitamente alguns serviços adicionais — aplicativos que os clientes podem utilizar: Cloud e Skeelo.
+Por isso, são emitidas notas de débito referentes a esses serviços de valor adicionado, que compõem o pacote contratado; a soma dessas notas corresponde ao total do boleto.
+As notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura.
+Nos próximos meses, você continuará recebendo essas notas quando o pagamento do boleto constar em nosso sistema. São apenas notas informativas dos serviços prestados, que a Prefeitura exige que sejam emitidas após o pagamento da mensalidade.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Explicação para CNPJ: nos planos da G6, além do serviço de internet, há alguns serviços de valor adicionado — aplicativos que os clientes podem utilizar: Cloud, Tocalivros Curadoria e Clube de Revistas.
+Para esses aplicativos, são emitidas notas de débito e nota fiscal de serviço (NFS-e, emitida pela Prefeitura); para o serviço de internet, é emitida uma nota fiscal modelo 21. A soma de todas as notas corresponde ao total do boleto.
+As notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura, e você continuará recebendo a nota de serviço quando o pagamento do boleto constar em nosso sistema.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Nossos planos de internet contam com SVAs (Serviços de Valor Agregado), entre eles o Skeelo, plataforma que oferece acesso a livros e audiobooks.
+A partir de agora, o Skeelo passa a ser disponibilizado em três categorias: Skeelo Light, Skeelo Standard e Skeelo Minibook. Essa mudança é exclusivamente na configuração e na categoria de acesso à plataforma do aplicativo.
+Importante: não haverá nenhuma alteração no valor do seu plano de internet, nem na velocidade contratada. A mudança não interfere na qualidade ou no funcionamento da sua conexão — o plano permanece o mesmo; apenas a configuração do Skeelo será atualizada conforme a nova categorização.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">APP CDN TV
+O aplicativo é o CDN TV.
+
+Instruções para acessar:
+1. Baixe o app CDN TV na Play Store (Android) buscando por "CDN TV", e instale-o.
+2. Ao abrir o app, selecione o provedor "SBS" na lista disponível.
+3. Para acessar a plataforma, utilize o seu CPF como login e senha, sem pontos ou traços (exemplo: 08364073699).
+
+Após essas etapas, você já deve conseguir acessar o conteúdo do app CDN TV.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-portal-do-cliente-e-aplicativo" style="display: none;"><h3><span class="n">17</span> Portal do Cliente e Aplicativo</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">📲 Conheça o aplicativo Portal do Cliente G6, disponível para download direto no seu celular.
+Baixe agora e aproveite essa novidade! ☺️
+Android: https://bit.ly/461a03L
+iPhone: https://bit.ly/4pX6izC
+
+Dados de acesso:
+Login: CPF, sem pontos e traços
+Senha: CPF, sem pontos e traços</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-horario-e-encerramento-de-expediente" style="display: none;"><h3><span class="n">18</span> Horário e Encerramento de Expediente</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Horário de atendimento:
+Segunda a sexta: das 08h06 às 17h30
+Sábado: das 08h00 às 12h00</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando nosso expediente! Por favor, aguarde. Assim que possível, um de nossos atendentes entrará em contato para dar continuidade à sua solicitação. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando nosso expediente! Assim que possível, um de nossos atendentes entrará em contato para dar continuidade à sua solicitação. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando nosso expediente! Peço que entre em contato novamente em horário comercial; assim que possível, um de nossos atendentes dará continuidade à sua solicitação. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando o expediente. Na segunda-feira, quando iniciarmos os atendimentos, entrarei em contato para prosseguirmos com a alteração. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando o expediente. Amanhã, quando iniciarmos os atendimentos, entrarei em contato para prosseguirmos com a alteração. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando nosso expediente. Peço que entre em contato novamente em horário comercial para que possamos auxiliar e dar continuidade à sua solicitação.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos encerrando nosso expediente. Caso haja alguma dúvida, peço que entre em contato novamente em horário comercial para que possamos auxiliar. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Mas, se tiver outras dúvidas, pode retornar aqui no chat — estaremos sempre à disposição, combinado?
+Tenha uma ótima noite! 🙂</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">(Em caso de solicitação de mudança de endereço)
+Estamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que tiver os dados do novo endereço, pode retornar aqui no chat, dentro do horário comercial, das 8h06 às 17h30. Estaremos sempre à disposição, combinado?
+Tenha uma ótima noite! 🙂</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">(Em caso de troca de titularidade)
+Estamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que os dois termos forem assinados, darei andamento à sua solicitação.
+A G6 agradece o seu contato — estaremos sempre à disposição, combinado?
+Tenha uma ótima noite! 🙂</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">(Em caso de alteração de velocidade ou data de vencimento)
+Estamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que o termo for assinado, darei andamento à sua solicitação.
+A G6 agradece o seu contato — estaremos sempre à disposição, combinado?
+Tenha uma ótima noite! 🙂</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estou finalizando o seu atendimento, pois o horário de atendimento está se encerrando. A G6 agradece o seu contato — estaremos sempre à disposição, combinado?
+Tenha uma ótima noite! 🙂</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-telefonia-voip-legado-eixo" style="display: none;"><h3><span class="n">19</span> Telefonia VoIP (Legado Eixo)</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei aqui e identifiquei que você possui o serviço de VoIP. A G6 não trabalha com serviço de telefonia — você deverá solicitar a portabilidade desse serviço. Podemos realizar esse procedimento também neste atendimento?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-debitos-com-terceiros-e-outros-setores" style="display: none;"><h3><span class="n">20</span> Débitos com Terceiros e Outros Setores</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">CDL
+Identifiquei que essa pendência não pode mais ser paga pela G6, pois foi encaminhada ao Sindicato do Comércio. Você deve fazer a negociação e o pagamento diretamente com esse órgão.
+Telefone (Associação Comercial): (35) 3622-3511</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">ACEG — Guará
+Após a troca da empresa, os débitos pendentes na época da alteração foram transferidos para a ACEG. Para tratar dessa pendência, é necessário falar diretamente com eles.
+Telefone: (12) 3128-2200</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Quem cuida dessa questão de cotação para o próximo ano é a Yara. Segue o contato para que você possa falar com ela: 😊
+Yara — WhatsApp: (35) 99182-0055
+E-mail: yara.alves@g6internet.com.br</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Uma equipe responsável está entrando em contato com todos os clientes para fornecer informações e esclarecer dúvidas sobre a migração do plano para o novo sistema de TV.
+Segue o número da atendente responsável, que pode ajudar diretamente: (12) 99751-6297</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Entendo a sua frustração por ficar sem o serviço de TV e peço desculpas pelo transtorno. No momento, estamos com alta demanda de atendimentos e, por isso, não conseguimos ir imediatamente.
+A equipe já está ciente da sua solicitação e sabe que se trata de um caso urgente. O atendimento será realizado ainda hoje, sem falta. Também solicitei que entrem em contato antes de ir, para que você fique ciente.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Infelizmente não será possível emitir boleto referente a este contrato, pois ele foi encerrado devido à inadimplência. Por gentileza, procure diretamente o CDL: (35) 3622-3511.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Verifiquei no sistema que sua dívida já não está mais com a G6 Internet — ela foi registrada junto à empresa de restrição de crédito, que entrará em contato para dar mais orientações. Por gentileza, aguarde o retorno do CDL.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-confirmacao-de-dados-cadastrais" style="display: none;"><h3><span class="n">21</span> Confirmação de Dados Cadastrais</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Certo! Para darmos continuidade ao atendimento, poderia confirmar o número de telefone e o e-mail do titular do contrato, por gentileza?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Poderia confirmar o e-mail também?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Você poderia confirmar seus dados de e-mail e número de celular para atualizarmos em nosso sistema?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Perfeito! Acabei de atualizar seus dados. Caso não consiga fazer a verificação de acesso ao portal pelo e-mail, envie o código recebido por SMS.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos realizando uma atualização importante em nosso sistema para melhorar o atendimento e a experiência com nossos serviços. Para garantir que tudo esteja em ordem, poderia confirmar os dados do cadastro, por favor?
+
+Número de telefone:
+E-mail:
+
+Agradecemos muito pela colaboração!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Olá, tudo bem? Espero que sim! 😊
+Falo com [nome do cliente]?
+Sou [seu nome], da G6 Internet. Verifiquei no sistema que você não possui um e-mail cadastrado. Poderia me enviar um novo e-mail, por favor?
+
+Qualquer coisa, estamos à disposição!
+Telefones: (35) 3629-6550 ou (35) 99977-405</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section><section class="category" id="cat-atendimento-mensagens-de-cortesia-e-encerramento-de-atendimento" style="display: none;"><h3><span class="n">22</span> Mensagens de Cortesia e Encerramento de Atendimento</h3><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Muito obrigado(a)!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Eu que agradeço! Qualquer coisa, fico à disposição. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Disponha! Se precisar de algo mais, é só chamar. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Foi um prazer ajudar! Se precisar de algo mais, é só chamar. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Algo mais em que eu possa ajudar por ora?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Eu que agradeço! Posso ajudar em algo mais? 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Posso ajudar em algo mais?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Foi um prazer ajudar. Tenha um ótimo dia!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Estamos à disposição sempre que precisar. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Um ótimo dia para você também! 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Perfeito! 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Eu que agradeço!</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Tudo bem sim! Obrigado(a) por perguntar. 😊 Como posso ajudar?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Efetuou o pagamento — um momento que irei te transferir para o setor responsável. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Entendo que você queira cancelar. Posso entender melhor o motivo, para verificar se conseguimos uma solução mais adequada para você?</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Um momento, por favor. Irei encaminhar para o setor responsável.</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">No momento, vou fazer meu intervalo de almoço; por isso, estarei transferindo o seu atendimento para outro atendente! Até breve 👋</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="msg-card" style="display: none;"><div class="text" contenteditable="true" spellcheck="true">Meu horário de expediente está encerrando, mas fique à vontade para nos contatar sempre que precisar — estaremos à disposição. 😊</div><div class="msg-actions"><button class="btn remove">Remover</button><button class="btn copy">Copiar</button></div></div><div class="add-row"><button class="add-btn">+ Nova mensagem</button></div></section></div>
+  </main>
+</div>
+
+<div class="floating-search">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+  <input id="searchInput" type="text" placeholder="Buscar mensagem, palavra-chave ou categoria…" autocomplete="off">
+  <div class="result-count" id="resultCount">6 de 224 mensagens</div>
+</div>
+
+<script>
+/* =========================================================================
+   DADOS — ABA 1: Mensagens de Atendimento (respostas para o cliente)
+   Edite aqui para adicionar, alterar ou remover categorias/mensagens.
+   Cada categoria tem um "title" e uma lista de "items" (mensagens em texto).
+   Use \n dentro do texto para quebras de linha.
+   ========================================================================= */
+/* @DATA_START */
+const DATA = [
+  {
+    "title": "Faturas e Boletos",
+    "items": [
+      "No momento não estamos conseguindo enviar o boleto, pois o sistema identificou um padrão de pagamento via PIX mensal. Dessa forma, o boleto não foi gerado para pagamento.",
+      "Sim, foi encaminhado pela G6 mesmo. 😊\nOcorreu o registro bancário das duas mensalidades antecipadamente e, por isso, o banco realizou a impressão dos boletos, que foram entregues antes da data. Pode ficar tranquilo(a): esses boletos se referem à G6 Internet.",
+      "Ocorreu um erro em nosso sistema. Acabei de ajustar o valor do seu boleto. Como será necessário o registro pelo banco, ele estará disponível para pagamento amanhã, tudo bem? 😊",
+      "Peço que entre em contato amanhã para que possamos enviar o boleto com o novo valor referente ao vencimento do dia 26/04, pois será gerado um novo registro pelo banco. Esse boleto estará disponível para pagamento a partir de amanhã.",
+      "Este boleto é proporcional, contado desde o dia da instalação até a data de vencimento. Por esse motivo, foi gerado um valor a mais no seu primeiro boleto, certo? 😊O boleto do próximo mês já virá no valor certinho contratado. ",
+      "Como o seu boleto tem mais de 60 dias, ele perdeu o registro no banco. Dessa forma, o pagamento deve ser feito pelo código Copia e Cola do Pix ou presencialmente em nossa loja.",
+      "Verifiquei que o boleto perdeu o registro do banco. Dessa forma, é necessário realizar o pagamento pelo código Pix ou presencialmente em nossa loja. Como prefere fazer?",
+      "A G6 Internet disponibiliza as faturas das seguintes formas:\n- Aplicativo G6 Internet – App do Cliente\n- E-mail: enviamos mensalmente para o e-mail cadastrado\n- WhatsApp: é possível acessar as faturas a qualquer momento\n- Site: https://portal.g6internet.com.br/facilita-totem (consulta e pagamento via Pix e/ou código de barras)\n- Presencialmente em nosso escritório\n- Entrega no endereço: nesse modo, o banco emite as faturas e o envio é feito pelos Correios. Como se trata de serviço terceirizado, não é possível garantir a data exata de chegada.\n\nAs faturas têm dia fixo de vencimento. Caso os Correios não realizem a entrega até a data, entre em contato conosco com antecedência ou acesse a fatura por um dos outros meios, para evitar acréscimos.",
+      "Os boletos são enviados por um serviço terceirizado. Infelizmente não conseguimos verificar o motivo do atraso na entrega, mas você pode gerar a segunda via pelo contato conosco ou pelo Portal do Cliente. Também enviamos aviso de vencimento por e-mail e SMS. 😊",
+      "Os boletos são enviados por um serviço terceirizado. Alguns clientes não estão recebendo a entrega; já estamos em contato com a empresa para regularizar a situação. Você pode gerar a segunda via pelo contato conosco, pelo Portal do Cliente, e também enviamos aviso por e-mail e SMS. 😊",
+      "As faturas constam em nosso sistema como já encaminhadas pelo banco à empresa terceirizada responsável pela entrega. É possível que esteja ocorrendo alguma intercorrência no processo de distribuição por parte dessa empresa. Por se tratar de serviço terceirizado, não conseguimos identificar com precisão o motivo do problema. Reforçamos que as faturas também são enviadas mensalmente por e-mail e ficam disponíveis neste canal de atendimento e no Portal do Cliente.",
+      "O endereço de cadastro está correto, mas farei a atualização de qualquer forma. Nossa entrega pelos Correios é um serviço terceirizado, então podem ocorrer atrasos no envio das contas. Você pode entrar em contato conosco ou acessar nosso portal para consultar os boletos disponíveis. Gostaria de ter acesso ao Portal do Cliente para consultar e pagar via Pix quando precisar?",
+      "Você gostaria da 2ª via para pagamento via Pix, boleto (PDF) ou código de barras?",
+      "Segue o boleto em maior atraso para pagamento. 😊",
+      "Segue a segunda via do boleto em maior atraso para pagamento. 😊",
+      "Segue o boleto solicitado. 😊",
+      "Segue o boleto do mês.",
+      "Segue o código de barras solicitado. 😊",
+      "Segue abaixo o boleto que causou o bloqueio do seu sinal.",
+      "O valor do boleto é de R$88,78. Se pago antes do vencimento, há desconto, por isso normalmente você paga R$79,90. Como o pagamento foi feito após a data de vencimento, o valor não recebe desconto e é cobrado com juros e multa, conforme descrito no boleto. 😊",
+      "Agradeço o envio do comprovante de pagamento! 😊 Como o pagamento foi feito após o vencimento, cobramos juros e correção sobre o valor que seria pago pelo código de barras. Preciso que seja realizado o pagamento do valor em aberto de R$2,67 para liberar o seu sinal. Peço que entre em contato conosco antes de fazer transferências para os próximos pagamentos, ou que o pagamento seja feito pelo nosso Portal do Cliente, onde o valor é corrigido automaticamente.",
+      "Consigo reagendar o pagamento de agosto para a data de setembro, com os juros correspondentes, para que seu sinal permaneça ativo. Podemos fazer dessa forma?",
+      "O sistema não permite reagendar o boleto para o mês seguinte. É possível reagendar apenas para o mês do boleto que já foi pago.",
+      "Infelizmente não conseguimos parcelar faturas em atraso. Mas, ao pagar o boleto do mês 9, o sinal já se mantém ativo.",
+      "O valor é atualizado automaticamente no momento do pagamento.",
+      "Segue, como solicitado, a segunda via do boleto referente ao vencimento de [data].",
+      "Segue a linha digitável do código de barras referente ao vencimento de [data].",
+      "Verifiquei no sistema que a instalação ocorreu no dia 05/09/2025, com data de vencimento todo dia 11. A primeira mensalidade é cobrada no valor proporcional aos dias utilizados, do dia da ativação até a data de vencimento escolhida. As próximas mensalidades serão no valor total do plano — apenas a primeira é diferente, por causa da data de ativação.",
+      "A G6 tem um serviço terceirizado, prestado pelos Correios. Após a chegada nos Correios, a G6 não consegue garantir a data de entrega; por isso, também disponibilizamos a fatura por outros meios, para facilitar. Além do envio do boleto físico, também enviamos mensalmente para o e-mail cadastrado: [e-mail cadastrado] — está correto? Também é possível acessar as faturas e pagar via Pix direto pelo Portal do Cliente. Vou te encaminhar os dados de acesso.",
+      "O contrato conosco é mensal; por isso, os boletos chegam dessa forma mesmo."
+    ]
+  },
+  {
+    "title": "Pagamento via Pix",
+    "items": [
+      "Segue o código Copia e Cola para pagamento via Pix. Por favor, utilize o código inteiro na opção Copia e Cola do Pix.",
+      "A G6 desativou a chave Pix para pagamento. Para pagar via Pix, é necessário gerar o QR Code, disponível apenas em nosso site: https://portal.g6internet.com.br/auth/login\nLogin:\nSenha:\nSegue um passo a passo.",
+      "MATRIZ – PIX: Para pagamento dessa fatura, você pode utilizar a chave e-mail abaixo: jaqueline.oliveira@g6internet.com.br\nValor a ser enviado, com juros e multa atualizados até hoje: R$102,60\nAs próximas faturas devem ser pagas normalmente pelo portal, já que esta chave não dá baixa automática no financeiro. Neste caso específico, faremos a baixa manualmente.",
+      "FILIAL – PIX: Para pagamento dessa fatura, você pode utilizar a chave CNPJ abaixo: 27751234000208\nValor a ser enviado, com juros e multa atualizados até hoje: R$96,31\nAs próximas faturas devem ser pagas normalmente pelo portal, já que esta chave não dá baixa automática no financeiro. Neste caso específico, faremos a baixa manualmente.",
+      "Acabei de verificar e o código está ativo e funcionando corretamente. Peço que tente outro banco, ou você pode efetuar o pagamento em uma lotérica ou em nosso escritório. Também temos a opção via Pix em nosso Portal do Cliente.",
+      "Você poderia gerar um novo comprovante do pagamento? Como consta \"em processamento\" no comprovante enviado, não consigo realizar a liberação com este documento.",
+      "Você poderia encaminhar o comprovante de pagamento, por gentileza? 😊",
+      "Você poderia enviar o comprovante completo, com os dados do pagamento, por gentileza?",
+      "Você poderia enviar um print da mensagem que aparece quando tenta efetuar o pagamento?",
+      "Esse é o comprovante de agendamento. Poderia, por gentileza, me encaminhar o comprovante do valor já debitado?",
+      "Muito obrigada pelo envio do comprovante! Estamos dando baixa no seu pagamento. 😊",
+      "Caso o pagamento tenha sido realizado pelo aplicativo do Serasa, é preciso aguardar até que ele conste em nosso sistema. Peço que aguarde até amanhã; caso não conste, entro em contato novamente. Reforçamos que os pagamentos sejam feitos diretamente em nosso portal, para evitar esse tipo de situação. ☺️",
+      "Já realizei a liberação do seu sinal. Como o pagamento foi feito pelo aplicativo do Serasa, é preciso aguardar, pois ele não é registrado de forma imediata em nosso sistema. Caso ocorra bloqueio novamente amanhã, peço que envie o comprovante para uma nova liberação. Reforçamos que os pagamentos sejam feitos diretamente em nosso portal, para evitar esse tipo de situação. ☺️",
+      "MENSAGEM DE SÁBADO\nComo o pagamento foi realizado no sábado, o banco ainda não nos repassou o valor, e por isso sua conexão foi bloqueada. Vou realizar o desbloqueio de confiança, válido até amanhã às 10h, para dar tempo do banco repassar o pagamento e a conexão não ser bloqueada novamente. Tudo bem? 😊",
+      "Como hoje não é considerado dia útil pelos bancos, o pagamento pode ser feito via Pix ou agendado para segunda-feira. É por isso que você não está conseguindo concluir a operação, certo?",
+      "Segue o código Copia e Cola para pagamento via Pix, referente à mensalidade de [mês]. Favor utilizar o código inteiro na opção Copia e Cola do Pix, e não apenas o link azul.",
+      "Assim que realizar o pagamento, me envie o comprovante para que eu possa desbloquear o seu sinal.",
+      "Perfeito, obrigado(a)! Identifiquei o comprovante enviado e irei anexá-lo em nosso sistema.",
+      "A G6 desativou a chave Pix para pagamento. Para pagar via Pix, é necessário gerar o QR Code, disponível apenas em nosso site: https://portal.g6internet.com.br\nUsuário:\nSenha:",
+      "Por segurança, será necessária a confirmação em duas etapas. Você pode escolher receber o token por SMS ou por e-mail. O envio pode levar cerca de 1 minuto para chegar.",
+      "A fatura com vencimento em 26/09/2025 perdeu o registro bancário por ultrapassar 60 dias de atraso, e foi reagendada para o dia 07/12/2025, para que você consiga realizar o pagamento via Pix. Segue o link para acessar a fatura e efetuar o pagamento: https://portal.g6internet.com.br/facilita-totem",
+      "Certo. Pelo que identifiquei no sistema, o Pix era realizado pela chave que correspondia ao nosso CNPJ. Todo Pix feito dessa forma precisava do envio do comprovante com o nome do titular e o nome da conta usada no pagamento, já que a baixa era manual. Como nem sempre os clientes enviavam o comprovante, não conseguíamos identificar quem havia pago. Por isso, a diretoria decidiu retirar essa chave e criar um sistema em que os clientes pudessem pagar via Pix de forma segura, com o valor caindo imediatamente em nosso sistema.",
+      "Verifiquei junto ao financeiro que o valor está incompleto, pois o atraso gerou cobrança de juros no valor de R$ ____. Para que possamos dar baixa no boleto, é necessário efetuar o pagamento do valor restante. Você poderia realizar esse complemento, por gentileza?",
+      "Chaves Pix por regional:\nWAY: 21.064.515/0001-25 — Gonçalves, São Bento do Sapucaí, Sapucaí Mirim, Osório\nSBS: 04705363000183 — Cachoeira de Minas, Conceição dos Ouros, Paraisópolis, Pouso Alegre (Cidade Jardim)\nMatriz: jaqueline.oliveira@g6internet.com.br — cidades de Minas Gerais\nFilial: 27751234000208 — cidades de São Paulo",
+      "No momento não será possível realizar o pagamento via Pix. Estamos com uma instabilidade em nosso Portal do Cliente hoje, no sistema onde o pagamento via Pix é realizado. Estamos abrindo uma exceção para essa instabilidade e posso te enviar uma chave Pix temporária para que você consiga efetuar o pagamento.",
+      "No momento não será possível realizar o pagamento via Pix. Estamos com uma instabilidade em nosso Portal do Cliente hoje, no sistema onde o pagamento via Pix é realizado. Gostaria de realizar o pagamento ainda hoje? Posso te enviar a linha digitável do código de barras. Tudo bem?",
+      "Estamos com uma intercorrência em nosso site de pagamento. Já estamos em contato com os responsáveis para resolver o quanto antes. Pedimos desculpas pelo transtorno — você poderá realizar o pagamento um pouco mais tarde.",
+      "Infelizmente ainda não foi resolvida a instabilidade em nosso Portal do Cliente. Peço desculpas pelo transtorno. Vou te enviar uma chave Pix temporária para que você consiga pagar a mensalidade. Para essa fatura, você pode pagar pela chave e-mail abaixo: jaqueline.oliveira@g6internet.com.br\nValor a ser enviado, com juros e multa atualizados até hoje: R$ ____ (referente ao vencimento de [data])."
+    ]
+  },
+  {
+    "title": "Bloqueio e Desbloqueio de Sinal",
+    "items": [
+      "Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, a conexão foi bloqueada.\nConsegui desbloquear sua conexão, que ficará liberada até amanhã às 10h. Caso efetue o pagamento da fatura em atraso ainda hoje, não há risco de um novo bloqueio.\nEm poucos minutos o sinal já estará ativo.",
+      "Verifiquei que estão em aberto o boleto com vencimento em 26/05/2021 e o boleto com vencimento em 26/06.",
+      "Vamos bloquear seu acesso por 120 dias. Nesse período, você não utilizará o serviço e não haverá cobrança — será cobrado apenas o valor proporcional de utilização até hoje e após o desbloqueio. Sua conexão será bloqueada assim que recebermos o termo assinado novamente. A cobrança volta a contar somente a partir da data de desbloqueio informada no termo ou a qualquer momento em que você solicitar o desbloqueio antecipado. Você pode solicitar esse bloqueio apenas uma vez a cada 12 meses.",
+      "Para realizarmos o bloqueio temporário do seu sinal, é necessário que todos os pagamentos estejam em dia. Caso já tenha pago os boletos em atraso, peço, por gentileza, que nos envie o comprovante para darmos continuidade ao atendimento. 😊 Após a baixa dos pagamentos, enviarei um termo para assinatura online, tudo bem?",
+      "Infelizmente o desbloqueio de confiança pode ser feito apenas uma vez. Depois de utilizado, não é possível uma nova liberação — apenas mediante o pagamento.",
+      "Consigo realizar o desbloqueio de confiança uma vez por mês em nosso sistema. Acabei de verificar que ele já foi utilizado neste mês, então a liberação agora só pode ocorrer mediante o comprovante de pagamento. Tudo bem?",
+      "Infelizmente não conseguimos realizar um segundo desbloqueio de confiança — o sistema não permite. A liberação, neste caso, só é possível mediante o comprovante de pagamento.",
+      "Como o desbloqueio de confiança foi liberado ontem, infelizmente o sistema não permite uma segunda liberação nesse modo — apenas mediante o comprovante de pagamento.",
+      "Infelizmente não é possível prolongar a data do desbloqueio de confiança. Após o vencimento, a G6 segue as normas da ANATEL e oferece 30 dias para o pagamento do boleto em atraso; depois desse prazo, é feito o bloqueio e, então, o desbloqueio de confiança, para que o cliente tenha acesso à internet e possa efetuar o pagamento e enviar o comprovante. Após esse período, o sistema bloqueia automaticamente e não conseguimos alterar novamente — apenas mediante o comprovante de pagamento.",
+      "A mudança se refere às novas normas da ANATEL. Como a pendência do mês 6 ultrapassou 15 dias após o vencimento, o sinal foi bloqueado neste mês — a aplicação da norma de bloqueio em 15 dias após o vencimento começou a valer agora. Posso realizar a liberação de confiança até amanhã às 10h; você gostaria?",
+      "A nova regra de bloqueio da ANATEL prevê 15 dias após o vencimento. Estávamos concedendo 30 dias para dar tempo aos clientes de regularizarem os débitos, e este mês o prazo foi ajustado para o previsto.",
+      "Essa nova regra foi definida pela ANATEL e já vínhamos informando há um tempo em nossos canais de comunicação. O ajuste começou a valer em 1º de junho, com bloqueio em até 15 dias após o vencimento.",
+      "Consegui verificar com minha supervisora e conseguimos liberar até amanhã. Reforçamos que esta é uma liberação especial — nos próximos meses, infelizmente, não será possível repetir essa liberação. Tudo bem?",
+      "Posso fazer o desbloqueio de confiança até amanhã às 10h, mas infelizmente não consigo liberar até a data que você solicitou, pois o bloqueio é feito automaticamente pelo nosso sistema.",
+      "Identificamos um rompimento de fibra na sua região, por isso o sinal pode estar instável. Nossos técnicos já estão trabalhando nisso, e em até 3 horas tudo deve estar normalizado. 😊",
+      "Estamos enfrentando uma falha massiva na região. Nossa equipe técnica já está trabalhando para resolver o problema o mais rápido possível. A previsão de normalização é de aproximadamente 3 horas. Agradecemos a compreensão e pedimos desculpas pelo transtorno.",
+      "Poderia, por favor, reiniciar o roteador e verificar se a conexão retorna? Muitas vezes esse procedimento já resolve a instabilidade. Caso o problema persista, nos avise para continuarmos o suporte.",
+      "Para a liberação do seu sinal, é necessário o pagamento destes dois boletos:",
+      "Para a liberação do seu sinal, é necessário também o pagamento deste boleto:",
+      "Ao pagar o boleto em maior atraso, já consigo realizar a liberação do seu sinal. 😊",
+      "Ao pagar o boleto do mês [ ], basta enviar o comprovante de pagamento que já realizamos a liberação do seu sinal. 😊",
+      "Perfeito! O sinal consta como ativo em nosso sistema. 😊",
+      "Eu acabei de efetuar a liberação do seu sinal. Peço que aguarde 5 minutos para que a conexão seja restabelecida. 😊",
+      "Já realizei o desbloqueio do seu sinal. Em alguns minutos, sua conexão estará ativa. 😊",
+      "Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, a conexão foi bloqueada. Você gostaria da liberação de confiança até amanhã às 10h?",
+      "O bloqueio do acesso ocorre devido a uma pendência financeira em aberto. Para não gerar mais valores, o acesso fica interrompido até a normalização dos pagamentos.",
+      "Ocorreu o bloqueio do sinal devido à falta de pagamento referente ao boleto vencido em 17/01. Há sempre 45 dias de tolerância de atraso antes do bloqueio de acesso.",
+      "Infelizmente não vou conseguir liberar, pois o sistema não está permitindo, já que o desbloqueio foi realizado no dia 01/07/2026. O desbloqueio é permitido apenas uma vez; depois disso, o sistema não permite um novo desbloqueio. A liberação, agora, só será possível mediante a baixa bancária do boleto em aberto.",
+      "Infelizmente não consigo segurar até o dia 01 — automaticamente, o sistema bloqueia com 15 dias de atraso. O que posso fazer, assim que ocorrer o bloqueio, é liberar; porém, no dia seguinte, por volta das 10h, haverá o rebloqueio. Depois disso, só conseguimos liberar com o comprovante de pagamento de março, pois é necessário anexá-lo ao sistema. 😊",
+      "Perfeito, obrigado(a)! Realizei o desbloqueio da sua conexão. Seu acesso voltará em instantes.",
+      "Identifiquei o comprovante enviado, obrigado(a)! Realizei o desbloqueio da sua conexão. Seu acesso voltará em instantes.",
+      "Identificamos uma falha massiva na sua região. Nossa equipe já está se deslocando ao local com máxima urgência para a solução do problema. Pedimos que aguarde um prazo de três horas para o restabelecimento do acesso, podendo normalizar antes disso. Desculpe-nos pelo transtorno.",
+      "BLOQUEIO ADMINISTRATIVO\nVamos bloquear seu acesso por, no mínimo, 30 dias e, no máximo, 120 dias. Nesse período, você não utilizará o serviço e não haverá cobrança — será cobrado apenas o proporcional de utilização até hoje e após o desbloqueio. Para solicitar o bloqueio, não pode haver nenhum boleto em aberto.\nPara o procedimento, enviaremos um link para assinatura digital. A cobrança volta a contar somente após a data de desbloqueio especificada no termo, ou a qualquer momento em que você solicitar o desbloqueio da conexão — nesse caso, a cobrança passa a partir desse momento. Você pode solicitar esse bloqueio apenas uma vez a cada 12 meses."
+    ]
+  },
+  {
+    "title": "Mudança de Cômodo",
+    "items": [
+      "Verifiquei que você solicitou uma mudança de cômodo. Para esse serviço, há uma taxa de R$100,00 + metragem de cabo utilizada (R$3,00/metro).\nPoderia me informar em qual cômodo o equipamento está instalado atualmente e para qual deseja transferi-lo?\nAssim que confirmar, abro sua solicitação no sistema, e o setor de agendamentos entrará em contato em até 48 horas para marcar a visita. Tudo bem? 😊",
+      "A solicitação foi aberta. O setor de agendamento entrará em contato em até 48h para marcar a alteração — mas fique tranquilo(a), entraremos em contato o mais rápido possível.",
+      "Após a instalação do equipamento, qualquer solicitação de mudança de cômodo está sujeita à cobrança de uma taxa adicional. Essa política é aplicada a todos os clientes.\nNo dia da instalação, nossos técnicos fazem toda a verificação técnica e confirmam o local ideal com o responsável presente, garantindo que o equipamento seja instalado no ambiente mais adequado para o seu funcionamento.\nCaso haja necessidade de mudança após essa confirmação, é preciso acionar uma equipe especializada de uma empresa terceirizada para realizar o serviço com segurança e qualidade. Por esse motivo, a taxa é gerada — ela cobre os custos operacionais dessa nova visita e a execução do trabalho.",
+      "Entendo. A taxa é gerada porque é necessário acionar uma equipe especializada de uma empresa terceirizada para realizar o serviço com segurança e qualidade. Ela cobre os custos operacionais dessa nova visita e a execução do trabalho, certo?",
+      "Mudança de cômodo + rede interna: valor fixo de R$200,00 + R$3,00 por metro de cabo utilizado. Acrescenta-se R$60,00 por ponto de rede interna adicional.",
+      "Como a instalação no novo local para o plano com TV é mais delicada, temos um custo para essa instalação, pois a empresa responsável pelo serviço é terceirizada. Por isso, esse é o valor.",
+      "Como a alteração exige o envio de uma equipe, temos um custo, pois a empresa responsável pelo serviço é terceirizada. Por isso, esse é o valor.",
+      "Para a mudança de cômodo, é cobrada uma taxa de R$100,00, lançada junto com a mensalidade da internet após a realização do serviço.",
+      "Para esse serviço, é cobrada uma taxa de R$100,00 e, caso a distância entre o ponto antigo e o novo ultrapasse 5 metros, é cobrado também R$3,00 por metro de cabo utilizado. Essa taxa é lançada no próximo vencimento.\nSe desejar seguir com o serviço, me informe, por gentileza, de qual cômodo será retirado o ponto principal, para qual será transferido, e se a residência possui rede interna.",
+      "Assim que você me enviar essas informações, consigo abrir a solicitação. Depois, é só aguardar: a equipe de Agendamentos entra em contato para marcar a melhor data para a realização do serviço.",
+      "Sua solicitação já foi registrada em nosso sistema. Em breve, nossa equipe entrará em contato para agendar o dia e o período da instalação. Esse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o possível para atender o mais rápido possível!",
+      "SERVIÇOS COM WATCH — Mudança de Cômodo: R$100,00 (verificar se todos os pontos são cabeados)."
+    ]
+  },
+  {
+    "title": "Mudança de Endereço",
+    "items": [
+      "MUDANÇA DE ENDEREÇO\n🏡 Para a mudança de endereço, é necessário que não haja nenhuma fatura vencida em aberto. Caso esteja tudo certo, envie o novo endereço completo para que possamos continuar com a solicitação. Se houver alguma fatura vencida em aberto, basta realizar o pagamento e nos enviar o(s) comprovante(s) para darmos continuidade. Combinado? 😃\n\nA mudança de endereço é feita da seguinte forma:\n➡️ Envio o termo de solicitação de mudança de endereço para assinatura.\n➡️ Após assinado, abro a solicitação para que nossa equipe verifique a viabilidade no novo endereço.\n➡️ Confirmada a viabilidade, nossa equipe de Agendamentos entra em contato para marcar a melhor data para a mudança.\n\nEsse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o mais breve possível. 🙌\n\nImportante: pedimos, por gentileza, que leve os equipamentos da internet da residência atual para o novo local, pois os técnicos irão instalá-los lá. Combinado? 😉\n\nSe estiver tudo certo, envie os seguintes dados:\nRua:\nBairro:\nNúmero e complemento (apto/bloco/andar):\nComplemento:\nCidade:\nCEP:\nPonto de referência (se houver):\n\nDados do titular do contrato:\nE-mail:\nTelefone/WhatsApp:\n\n💰 É cobrada uma taxa de R$150,00. Essa taxa é lançada no próximo vencimento e pode ser dividida em até 3x. Tudo bem? (Me informe, por gentileza, se prefere em 1x, 2x ou 3x.)",
+      "Como já houve uma mudança de endereço anterior sem cobrança de taxa, desta vez será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 2x, se preferir. Esse valor virá em fatura avulsa, para o próximo mês.",
+      "R$200,00 para cliente WATCH com STB. Caso haja STB em comodato em outros pontos, acrescenta-se R$60,00 por equipamento.\nSem STB, na mudança apenas da internet, a taxa é de R$130,00 (o Watch permanece instalado na TV).",
+      "Pelo endereço informado, não conseguimos identificar o local exato. Por isso, não é possível verificar a cobertura e dar continuidade à mudança. Poderia enviar a localização exata (o ponto no Google Maps ou a localização pelo WhatsApp)?",
+      "Mudança de endereço + rede interna: R$250,00.",
+      "Como a solicitação foi feita hoje, nossa equipe está verificando a viabilidade técnica no novo endereço. Assim que tivermos a confirmação, o time de Agendamentos entrará em contato para marcar a melhor data para a mudança.\nEsse processo pode levar até 48 horas, mas fique tranquilo(a): estamos agilizando tudo. 🙌\nNão se esqueça de levar os equipamentos da internet para o novo local, pois os técnicos irão utilizá-los na instalação. 😊",
+      "SOLICITAÇÃO ABERTA\nSua solicitação foi aberta no sistema. Vamos verificar a disponibilidade de instalação no novo endereço e, em seguida, você receberá uma mensagem para agendar a instalação. Esse processo pode levar até 48 horas, mas fique tranquilo(a): faremos o mais breve possível.\nImportante: pedimos, por gentileza, que leve os equipamentos da internet da residência atual para o novo local, pois os técnicos irão instalá-los lá. Combinado?",
+      "Como a viabilidade ainda não foi concluída, é necessário aguardar — mas ainda hoje entraremos em contato, combinado?",
+      "Após a assinatura do contrato, abrimos a solicitação para que nossa equipe verifique a viabilidade no endereço. Confirmada a viabilidade, nossa equipe de Agendamentos entra em contato para marcar a melhor data e período para a instalação. 😊 O prazo para o contato é de 48h, mas fique tranquilo(a): faremos o mais rápido possível.",
+      "📝 Me envie, por gentileza, os seguintes dados:\n\nLocalização pelo Google Maps (indispensável em endereços rurais ou de difícil localização)\nNome da rua:\nBairro:\nNº:\nComplemento (se prédio: nº do apartamento, bloco e andar):\nCidade:\nCEP:\nPonto de referência:\nTelefone:",
+      "Como seu cadastro tem menos de 12 meses de ativação, será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 3x, se preferir. Esse valor vem em fatura avulsa, para o próximo mês.",
+      "Como foi solicitada uma mudança de endereço com menos de 12 meses de contrato, será gerada uma taxa de serviço de R$150,00, que pode ser dividida em 3x, se preferir. Esse valor vem em fatura avulsa, para o próximo mês.",
+      "Para este serviço, é cobrada uma taxa de R$150,00 para clientes que possuem apenas internet, e de R$200,00 para clientes com combo internet + TV (mais R$60,00 por ponto adicional). Podemos dividir em até 3 vezes, se preferir.",
+      "Identifiquei que existe uma pendência financeira neste contrato. Por esse motivo, infelizmente não será possível prosseguir com a solicitação de mudança de endereço. Assim que o pagamento das mensalidades pendentes for realizado, poderemos dar continuidade ao atendimento. Caso já tenha efetuado o pagamento, poderia me enviar o comprovante, por gentileza, para que eu possa prosseguir com a sua solicitação?",
+      "✨ Passo a passo para enviar a localização:\n- É importante estar dentro da residência no momento do envio.\n- Toque no 📎 (o mesmo ícone usado para gravar áudio no WhatsApp).\n- Toque em Localização.\n- Toque em Localização atual.\n\n✅ Pronto — localização enviada!\n📍 Só são aceitas localizações enviadas dessa forma.\n\nAssim que você enviar, aguarde: vou encaminhar ao setor de viabilidade e dar continuidade ao seu atendimento. Combinado?",
+      "SERVIÇOS COM WATCH — Mudança de Endereço:\nR$170,00 para cliente WATCH com STB. Se houver STB em comodato em outros pontos, acrescenta-se R$40,00 por equipamento.\nSem STB, na mudança apenas da internet, a taxa é de R$130,00 (o Watch permanece instalado na TV)."
+    ]
+  },
+  {
+    "title": "Troca de Titularidade",
+    "items": [
+      "Para fazer a alteração, preciso dos dados do novo titular, para verificar se o sistema aprova o CPF. Se aprovado, faremos o cadastro. Tanto o titular atual quanto o novo titular devem assinar o termo. Os termos podem ser assinados presencialmente em nosso escritório, ou posso enviá-los por e-mail para assinatura digital. Qual forma você prefere?\n\nImportante!\n📝 Só é possível prosseguir com a solicitação com todos os boletos vencidos pagos.\n\nLembrando que só conseguimos continuar a solicitação após os dois contratos serem assinados digitalmente corretamente.\n\n➡️ Com os documentos assinados, abriremos a solicitação de troca de titularidade, e o sistema leva cerca de 48 horas para concluir a troca.\n\nVou precisar destes dados do novo titular para elaborar o termo de transferência:\n- Nome completo\n- CPF\n- RG\n- Data de nascimento\n- E-mail\n- Telefone\n\nApós o envio desses dados, poderei dar continuidade à sua solicitação.",
+      "Durante a análise de crédito, identificamos que não foi possível aprovar o CPF informado no momento. Para dar continuidade ao processo, sugerimos indicar um novo titular.",
+      "Lamentamos informar que, após a análise financeira do CPF do novo titular, ele não foi aprovado em nossa análise de crédito. Por esse motivo, não será possível realizar a transferência de titularidade.",
+      "🔄 Os dados que precisarei do novo titular são:\n- Nome completo\n- CNPJ\n- Razão social\n- E-mail\n- Telefone\n\nSerá necessário que uma pessoa física seja autorizada a assinar em nome da empresa. Segue os dados necessários para o cadastro:\nImportante: é necessário que seja um dos sócios ou o diretor mencionado no contrato social.\n\nCPF:\nIdentidade:\nNome:\nTelefone:\nCelular:\nE-mail:\nCargo ocupacional:",
+      "Verifiquei em nosso sistema e não consta contrato no CNPJ informado. Poderia confirmar se está registrado em outro CNPJ ou CPF?",
+      "Já caiu a assinatura em nosso sistema. Vou avisar a atendente anterior para que dê continuidade à sua solicitação, ok?",
+      "Recebi a sua assinatura, e a solicitação de troca de titularidade foi aberta. O sistema leva cerca de 48 horas para concluir a troca. Assim que finalizarmos, entro em contato novamente. 😉",
+      "Você gostaria de verificar a mudança de titularidade para quem vai ficar no local, ou verificar se atendemos no novo endereço?",
+      "Identifiquei que constam dois contratos neste CPF. Poderia me informar qual é o endereço, por gentileza?",
+      "A transferência de titularidade ocorre da seguinte forma:\n➡️ Faço o cadastro do novo titular.\n➡️ Verificamos se é possível realizar a transferência para o novo titular.\n➡️ Confirmada a possibilidade, envio os documentos para assinatura digital, tanto para o titular atual quanto para o novo:\n- o titular atual recebe o termo de cancelamento do contrato, por motivo de transferência de titularidade;\n- o novo titular recebe o termo de ativação, no mesmo número do contrato do titular atual.\n\nLembrando que só conseguimos continuar a solicitação após os dois contratos serem assinados digitalmente e corretamente.\n\n➡️ Com os documentos assinados, abriremos a solicitação de troca de titularidade, e o sistema leva cerca de 48 horas para concluir a troca.\n\n⚠️ Requisito: para seguirmos com essa alteração, é necessário o pagamento de todas as faturas vencidas.",
+      "Explicação simples (caso o cliente não entenda): para fazer a alteração, preciso dos dados do novo titular, para verificar se o sistema aprova o CPF. Se aprovado, faremos o cadastro. O titular atual deve assinar o termo de cancelamento, e o novo titular, um termo de contratação. Os termos podem ser assinados presencialmente no escritório, ou posso enviá-los por e-mail ou WhatsApp para assinatura digital. Qual forma você prefere?",
+      "Infelizmente não conseguiremos prosseguir com a troca de titularidade, pois o CPF não foi aprovado em nossa análise de crédito."
+    ]
+  },
+  {
+    "title": "Cancelamento",
+    "items": [
+      "Pode me detalhar melhor o que motivou a solicitação de cancelamento do seu serviço, por favor? Assim, consigo entender melhor o seu pedido e ajudar de forma mais rápida e eficaz.",
+      "Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento que está no endereço, caso haja. Não há multa contratual (caso o contrato já tenha mais de 12 meses). Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?\nObs.: o termo de cancelamento deve ser assinado no mesmo dia do envio do link, pois os valores informados são referentes a essa data de cancelamento.",
+      "Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento de internet que está no endereço, em até 48 horas após a assinatura (caso haja). Não há multa contratual. Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?\nObs.: o termo de cancelamento deve ser assinado no mesmo dia do envio do link, pois os valores informados são referentes a essa data de cancelamento.",
+      "Para o cancelamento, você precisa assinar um termo autorizando o procedimento — pode ser presencialmente ou de forma eletrônica (enviamos um link para assinatura). Também será necessária a devolução do equipamento que está no endereço. Há multa contratual no valor de R$125,00. Em relação às faturas, ficam apenas os dias proporcionais de uso até a data do cancelamento. Prefere que eu envie o termo por aqui, ou prefere vir ao escritório assinar?"
+    ]
+  },
+  {
+    "title": "Assinatura Digital e Termos",
+    "items": [
+      "O link para assinatura foi enviado via ClickSign, para você e para o atual titular. O termo chegará em uma conversa do WhatsApp.",
+      "O link para sua assinatura foi enviado via ClickSign. O termo chegará em uma conversa do WhatsApp.",
+      "O link para sua assinatura foi enviado via ClickSign. O termo chegará por e-mail para vocês.",
+      "Segue o link para assinatura. Por favor, atente-se para fazer a assinatura o mais parecida possível com a do seu documento. A foto solicitada no momento da assinatura deve ser sua, segurando o documento. Assim que concluir, me avise para que eu possa dar continuidade à sua solicitação.",
+      "Passo a passo da assinatura:\n♦️ Clique no link — ele precisa estar azul.\n♦️ Quando o contrato aparecer na tela, toque em ASSINAR.\n♦️ Toque em AVANÇAR para iniciar a assinatura.\n♦️ Tire uma selfie com o documento em mãos, próximo ao rosto.\n♦️ Toque em AVANÇAR.\n♦️ Assine com o dedo na tela do celular.\n♦️ Toque em AVANÇAR.\n♦️ Você receberá um token de 6 letras no seu e-mail.\n♦️ Digite o código na tela do contrato e toque em ENCERRAR."
+    ]
+  },
+  {
+    "title": "Planos e Valores",
+    "items": [
+      "🤩 Os planos de acesso Fibra Óptica são:\n📌 300 Mega – R$79,90\n📌 700 Mega – R$99,90\n📌 1 Giga – R$159,90",
+      "Planos para CNPJ:\n300 Mega – R$100,00\n700 Mega – R$125,00\n1 Giga – R$200,00",
+      "📶 300 Megas – R$79,90\n📶 700 Megas – R$99,90\n📶 1 Giga – R$159,90\n\nRádio 4M: R$99,90 (ou R$100,00, podendo dividir em 2x)\n\nCombo Essencial + 300/450 Megas – R$109,00\nCombo Essencial + 700 Megas – R$139,00\nCombo Essencial + 1 Giga – R$199,00\n\nCidades: Piquete, Lorena, Guará, Pindamonhangaba, Canas e Campos do Jordão\n450 Mega – R$79,90\n700 Mega – R$99,90\n1000 Mega – R$149,90\n\n1 STB em comodato + taxa de ativação de R$60,00 + metragem de cabo (para TVs digital/tubo). Ponto adicional: R$29,90 + ativação e cabo.",
+      "Para alterar o plano/velocidade, é necessário que todas as contas vencidas estejam quitadas. Se estiver tudo em dia, consigo dar continuidade à sua solicitação agora mesmo. Se houver boletos vencidos em aberto, assim que realizar o pagamento, basta enviar o comprovante para prosseguirmos.\nAlém disso, a alteração exige a assinatura de um termo, que pode ser enviado para assinatura digital online ou assinado presencialmente em nosso escritório (também de forma digital).",
+      "Para realizarmos a alteração no seu plano, é necessário que todos os pagamentos estejam em dia. Será preciso assinar novamente o termo de adesão, já que essa mudança renova a fidelidade do contrato por mais 12 meses. A nova promoção é válida por 6 meses; após esse período, a mensalidade passa a ser de R$79,90 para 450 Mega.",
+      "Atualmente, seu plano de internet é de 300 Mega, com mensalidade de R$79,90.\nCaso deseje adicionar um dos planos de TV (Power, Power + Sports ou Power Supercompleto), o valor será somado à mensalidade atual:\n📺 Plano Power: R$79,90 (internet) + R$69,90 (TV) = R$149,80/mês\n📺 Plano Power + Sports: R$79,90 (internet) + R$79,90 (TV) = R$159,80/mês\n📺 Plano Power Supercompleto: R$79,90 (internet) + R$89,90 (TV) = R$169,80/mês\nSe tiver interesse ou quiser mais informações, estamos à disposição! 💬",
+      "Não, o roteador é o mesmo para todos os planos. Ele já suporta até 1 Giga. 😊",
+      "FIBRA ÓPTICA + TV\nEscolha seu plano de internet ou monte seu pacote com canais de TV:\n300 Mega – R$79,90 · Power – R$69,90\n700 Mega – R$99,90 · Power Sports – R$79,90\n1000 Mega – R$159,90 · Power Completo – R$89,90\n\nExemplo: 300 Mega + Power Sports = R$159,80\n\nCombos Essenciais:\nCombo Essencial + 300/450 Mega – R$109,00\nCombo Essencial + 700 Mega – R$139,00\nCombo Essencial + 1 Giga – R$199,00\n\nObs.: os planos já incluem aplicativos de livros, revistas e armazenamento em nuvem.",
+      "Para TVs Smart fabricadas a partir de 2020 e compatíveis com o aplicativo, é necessário apenas baixar e configurar o app. Caso la TV não seja compatível, será necessária a instalação de um STB (conversor); nesse caso, é cobrada uma taxa de instalação de R$60,00, além da metragem de cabo, se necessária.\nA contratação do serviço de TV também tem fidelidade de 12 meses, assim como os demais serviços.\nA grade de canais de cada combo pode ser consultada em nosso site: https://www.g6internet.com.br/"
+    ]
+  },
+  {
+    "title": "Alteração de Velocidade e Data de Vencimento",
+    "items": [
+      "ALTERAÇÃO DE DATA DE VENCIMENTO\nDatas disponíveis: 01, 06, 11, 16, 21 e 26.\n\nPara alterar a data de vencimento, é necessário que todas as contas vencidas estejam quitadas. Se estiver tudo em dia, consigo dar continuidade à sua solicitação agora mesmo. Se houver boletos vencidos em aberto, assim que o pagamento for feito, basta nos enviar o comprovante para darmos continuidade.",
+      "Vamos gerar um termo, e a alteração só será feita após a assinatura dele.",
+      "Após a alteração da data de vencimento, o boleto do próximo mês será no valor proporcional à mudança de data. Os demais meses voltam a ser no valor total do plano.",
+      "ALTERAÇÃO DE VELOCIDADE\nPara realizarmos a sua solicitação de alteração de velocidade, preciso que você assine um termo autorizando o procedimento. Assim que a assinatura for feita, consigo realizar a alteração. Vou te enviar um link para a assinatura digital, tudo bem?",
+      "⚠️ Importante! As faturas precisam estar em dia para que o sistema permita abrir a solicitação.",
+      "Verifiquei que existe uma pendência financeira neste contrato. Por esse motivo, não conseguiremos prosseguir com a alteração de velocidade, pois o sistema não permite alterações com mensalidade pendente.",
+      "O valor do próximo boleto será proporcional aos dias usados em cada plano, e os seguintes já virão no valor do novo plano. Combinado?"
+    ]
+  },
+  {
+    "title": "Migração de Tecnologia (Rádio → Fibra)",
+    "items": [
+      "O serviço de internet via rádio que você utiliza está sendo gradativamente interrompido, pois não será mais oferecido no seu bairro. Precisamos realizar a alteração do seu plano o quanto antes, já que a torre de atendimento via rádio será desativada. Por gentileza, escolha um plano na fibra óptica para que possamos enviar o documento de alteração, e nossa equipe técnica vá até o seu endereço realizar a troca da tecnologia da internet. Tudo bem?"
+    ]
+  },
+  {
+    "title": "Rede Interna e Pontos Adicionais",
+    "items": [
+      "1 ponto: R$100,00 + metragem de cabo\n2 pontos: R$160,00 + metragem de cabo\n3 pontos: R$220,00 + metragem de cabo\n4 pontos: R$280,00 + metragem de cabo\n5 pontos ou mais: necessária vistoria — encaminhar para o Suporte.\n\nRede interna e mudança de cômodo: a G6 realiza o serviço — encaminhar para o setor de Pós-venda (mudança de cômodo) ou Suporte (rede interna).\nAtivação com serviço de rede interna: realizada pela G Force.",
+      "PONTO ADICIONAL DE TV\nO ponto adicional tem um custo de R$60,00 pela instalação do equipamento, mais R$3,00 por metro de cabo, considerando a distância do roteador até a TV.",
+      "REDE INTERNA\nÉ a ligação por cabo de rede desde o nosso equipamento principal até o local onde será feito o novo ponto. O cabo pode ser conectado a outro roteador ou direto a um dispositivo, como um computador.\nSe for ligar em um roteador, será necessário adquiri-lo — e, para que toda a banda seja transmitida, ele precisa ter especificação Gigabit.\nO valor do serviço depende da quantidade de pontos de rede: para um ponto, o valor é de R$100,00 + metragem de cabo (R$3,00 o metro). Após o pagamento do serviço, volta-se a pagar apenas o valor da mensalidade.\n\n1 ponto: R$100,00 + metragem de cabo\n2 pontos: R$160,00 + metragem de cabo\n3 pontos: R$220,00 + metragem de cabo\n4 pontos: R$280,00 + metragem de cabo\n5 pontos ou mais: necessária análise",
+      "VALORES DE SERVIÇOS\n🔸 Mudança de cômodo + rede interna: valor fixo de R$200,00 + R$3,00 por metro de cabo utilizado. Acrescenta-se R$60,00 por ponto de rede interna.\n🔸 Mudança de endereço + rede interna: valor fixo de R$250,00 + R$3,00 por metro de cabo utilizado.\n🔸 Reinstalação: R$100,00",
+      "PONTO ADICIONAL\nPara o ponto adicional de TV, preciso que você me informe se a outra TV é Smart.\nSe for, instalamos o aplicativo G6 diretamente nela.\nCaso a TV seja de tubo ou digital, será necessária a instalação de um técnico até a residência para instalar um novo equipamento, com custo de R$60,00 pela instalação + R$29,90 mensais + metragem de cabo, se necessária."
+    ]
+  },
+  {
+    "title": "Rede Mesh",
+    "items": [
+      "REDE MESH\nPara contratar este serviço, é necessário assinar o termo de adesão, com fidelidade de 12 meses. O valor mensal é de R$19,90, cobrado além da mensalidade do plano já contratado. Não há taxa para a ativação.\nCaso seja necessário cabear até o segundo roteador, é cobrado R$3,00 por metro de cabo, mais R$100,00 referente ao valor do serviço.\nApós a assinatura do termo, abrirei a solicitação, e o setor de agendamento entrará em contato em até 48h para marcar a instalação, combinado?\nCaso seja necessário cabear a rede mesh para outros locais, também será cobrada a taxa de serviço de R$100,00 + metragem.",
+      "REDE MESH\nPara contratar este serviço, é necessário assinar o termo de adesão, com fidelidade de 12 meses. O valor mensal é de R$19,90, cobrado além da mensalidade do plano já contratado. Não há taxa para a ativação, e não pode haver boleto em aberto.\nApós a assinatura do termo, abrirei a solicitação, e o setor de agendamento entrará em contato em até 48h para marcar a instalação. Tudo bem?"
+    ]
+  },
+  {
+    "title": "IP Fixo e Equipamentos",
+    "items": [
+      "Conseguimos disponibilizar o IP Fixo. Para isso, é gerado um termo, com assinatura por link (que posso enviar por aqui) ou presencialmente em nosso escritório. O valor do IP Fixo é de R$30,00, acrescido nas mensalidades futuras.",
+      "Como o equipamento está em comodato, para a troca da fonte é necessário que o(a) titular assine um termo. O valor é de R$20,00, que pode ser pago via Pix ou presencialmente em nosso escritório. Como prefere fazer?",
+      "Vou transferir seu atendimento para o setor responsável, para verificarem a situação do roteador e confirmar se realmente queimou. Caso tenha queimado ou sofrido outro dano que comprometa o uso, conseguimos deixar outro aparelho em comodato em sua residência, sendo cobrado o valor referente ao aparelho anterior, que ficará em desuso.",
+      "Conforme informado, para realizarmos a troca do equipamento, será necessário assinar um termo de comodato. O pagamento deve ser feito via Pix e, após a confirmação, o setor técnico irá até a residência para entregar o aparelho. Tudo bem?"
+    ]
+  },
+  {
+    "title": "Explicações Técnicas",
+    "items": [
+      "O roteador pode até transmitir mais velocidade, mas isso depende dos equipamentos receptores. Em geral, ele transmite até 300 Mb, podendo passar mais. Computador e celular também precisam ser compatíveis para receber mais mega: às vezes o roteador transmite 350 Mb, mas se o celular for de tecnologia 2.4 GHz, ele receberá no máximo 50 Mb, dependendo da interferência no local. Para receber mais de 100 Mb, os equipamentos precisam ter tecnologia 5G."
+    ]
+  },
+  {
+    "title": "Aplicativos (SVAs — Skeelo, Cloud e CDN TV)",
+    "items": [
+      "APLICATIVOS\nA G6, dentro do plano de internet contratado, oferece gratuitamente alguns aplicativos: Cloud e Skeelo.\nPor esse motivo, são emitidas notas de débito referentes a esses serviços de valor adicionado, que compõem o pacote contratado. A soma dessas notas corresponde ao total do boleto.\nAs notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura.\nNos próximos meses, você continuará recebendo as notas desses aplicativos quando o pagamento do boleto constar em nosso sistema. Isso não significa que você precisará pagar algo além do seu plano.",
+      "Você não precisa se preocupar: não está pagando nada a mais além do valor do seu plano de internet. A G6 oferece, gratuitamente, alguns aplicativos junto com o plano, como o Cloud e o Skeelo.\nPor isso, você recebe notas fiscais desses serviços, mas elas não são cobranças extras — são emitidas automaticamente pelo sistema da Prefeitura, apenas para registrar que esses aplicativos fazem parte do seu pacote.\nOu seja, o valor do seu boleto continua o mesmo, e você não precisa pagar nada além disso. 💙\nQualquer dúvida, estou à disposição!",
+      "SVAs\nAo alterar para um plano sem os aplicativos inclusos, o valor da mensalidade permanece o mesmo. Isso ocorre porque o plano contratado tem essa condição, e os aplicativos são oferecidos como benefício, sem custo adicional. Além disso, os planos comercializados sem os aplicativos têm o mesmo valor de mensalidade que você já paga. Por isso, a retirada dos aplicativos não resulta em redução no valor do plano.",
+      "O Skeelo é um aplicativo de leitura de e-books, disponível para Android e iOS. Para utilizá-lo:\n✔️ Baixe o aplicativo\n✔️ Crie uma conta\n✔️ Selecione os gêneros de leitura preferidos\n✔️ Acesse o app, procure o benefício \"Skeelo Parcerias\" e selecione G6 Internet\n✔️ Navegue até a aba \"Meus livros\" para ler os títulos liberados\n\nPara ler um livro:\n✔️ Toque sobre o livro\n✔️ Selecione o título desejado\n✔️ Aguarde o download\n✔️ Ajuste o tipo e o tamanho da fonte\n✔️ Altere o tema do aplicativo (dia, noite ou sépia)\n\n📚 O Skeelo também permite marcar páginas, adicionar notas, visualizar a ficha técnica e ver comentários de outros leitores.\nBaixe o aplicativo e boa leitura! 📖",
+      "CLOUD — tecnologia que permite acesso remoto a softwares, armazenamento de arquivos e processamento de dados pela internet. É uma alternativa para acessar dados importantes de qualquer computador, em qualquer lugar.\nLink de acesso: https://g6.ispdrive.com.br/login\nLogin e senha são os mesmos do Portal do Cliente G6.",
+      "SOBRE AS NOTAS FISCAIS\nA G6, dentro do plano de internet fornecido, oferece gratuitamente alguns serviços adicionais — aplicativos que os clientes podem utilizar: Cloud e Skeelo.\nPor isso, são emitidas notas de débito referentes a esses serviços de valor adicionado, que compõem o pacote contratado; a soma dessas notas corresponde ao total do boleto.\nAs notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura.\nNos próximos meses, você continuará recebendo essas notas quando o pagamento do boleto constar em nosso sistema. São apenas notas informativas dos serviços prestados, que a Prefeitura exige que sejam emitidas após o pagamento da mensalidade.",
+      "Explicação para CNPJ: nos planos da G6, além do serviço de internet, há alguns serviços de valor adicionado — aplicativos que os clientes podem utilizar: Cloud, Tocalivros Curadoria e Clube de Revistas.\nPara esses aplicativos, são emitidas notas de débito e nota fiscal de serviço (NFS-e, emitida pela Prefeitura); para o serviço de internet, é emitida uma nota fiscal modelo 21. A soma de todas as notas corresponde ao total do boleto.\nAs notas são encaminhadas automaticamente pelo site de emissão de notas da Prefeitura, e você continuará recebendo a nota de serviço quando o pagamento do boleto constar em nosso sistema.",
+      "Nossos planos de internet contam com SVAs (Serviços de Valor Agregado), entre eles o Skeelo, plataforma que oferece acesso a livros e audiobooks.\nA partir de agora, o Skeelo passa a ser disponibilizado em três categorias: Skeelo Light, Skeelo Standard e Skeelo Minibook. Essa mudança é exclusivamente na configuração e na categoria de acesso à plataforma do aplicativo.\nImportante: não haverá nenhuma alteração no valor do seu plano de internet, nem na velocidade contratada. A mudança não interfere na qualidade ou no funcionamento da sua conexão — o plano permanece o mesmo; apenas a configuração do Skeelo será atualizada conforme a nova categorização.",
+      "APP CDN TV\nO aplicativo é o CDN TV.\n\nInstruções para acessar:\n1. Baixe o app CDN TV na Play Store (Android) buscando por \"CDN TV\", e instale-o.\n2. Ao abrir o app, selecione o provedor \"SBS\" na lista disponível.\n3. Para acessar a plataforma, utilize o seu CPF como login e senha, sem pontos ou traços (exemplo: 08364073699).\n\nApós essas etapas, você já deve conseguir acessar o conteúdo do app CDN TV."
+    ]
+  },
+  {
+    "title": "Portal do Cliente e Aplicativo",
+    "items": [
+      "📲 Conheça o aplicativo Portal do Cliente G6, disponível para download direto no seu celular.\nBaixe agora e aproveite essa novidade! ☺️\nAndroid: https://bit.ly/461a03L\niPhone: https://bit.ly/4pX6izC\n\nDados de acesso:\nLogin: CPF, sem pontos e traços\nSenha: CPF, sem pontos e traços"
+    ]
+  },
+  {
+    "title": "Horário e Encerramento de Expediente",
+    "items": [
+      "Horário de atendimento:\nSegunda a sexta: das 08h06 às 17h30\nSábado: das 08h00 às 12h00",
+      "Estamos encerrando nosso expediente! Por favor, aguarde. Assim que possível, um de nossos atendentes entrará em contato para dar continuidade à sua solicitação. 😊",
+      "Estamos encerrando nosso expediente! Assim que possível, um de nossos atendentes entrará em contato para dar continuidade à sua solicitação. 😊",
+      "Estamos encerrando nosso expediente! Peço que entre em contato novamente em horário comercial; assim que possível, um de nossos atendentes dará continuidade à sua solicitação. 😊",
+      "Estamos encerrando o expediente. Na segunda-feira, quando iniciarmos os atendimentos, entrarei em contato para prosseguirmos com a alteração. 😊",
+      "Estamos encerrando o expediente. Amanhã, quando iniciarmos os atendimentos, entrarei em contato para prosseguirmos com a alteração. 😊",
+      "Estamos encerrando nosso expediente. Peço que entre em contato novamente em horário comercial para que possamos auxiliar e dar continuidade à sua solicitação.",
+      "Estamos encerrando nosso expediente. Caso haja alguma dúvida, peço que entre em contato novamente em horário comercial para que possamos auxiliar. 😊",
+      "Estamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Mas, se tiver outras dúvidas, pode retornar aqui no chat — estaremos sempre à disposição, combinado?\nTenha uma ótima noite! 🙂",
+      "(Em caso de solicitação de mudança de endereço)\nEstamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que tiver os dados do novo endereço, pode retornar aqui no chat, dentro do horário comercial, das 8h06 às 17h30. Estaremos sempre à disposição, combinado?\nTenha uma ótima noite! 🙂",
+      "(Em caso de troca de titularidade)\nEstamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que os dois termos forem assinados, darei andamento à sua solicitação.\nA G6 agradece o seu contato — estaremos sempre à disposição, combinado?\nTenha uma ótima noite! 🙂",
+      "(Em caso de alteração de velocidade ou data de vencimento)\nEstamos finalizando o seu atendimento, pois o horário de atendimento está se encerrando. Assim que o termo for assinado, darei andamento à sua solicitação.\nA G6 agradece o seu contato — estaremos sempre à disposição, combinado?\nTenha uma ótima noite! 🙂",
+      "Estou finalizando o seu atendimento, pois o horário de atendimento está se encerrando. A G6 agradece o seu contato — estaremos sempre à disposição, combinado?\nTenha uma ótima noite! 🙂"
+    ]
+  },
+  {
+    "title": "Telefonia VoIP (Legado Eixo)",
+    "items": [
+      "Verifiquei aqui e identifiquei que você possui o serviço de VoIP. A G6 não trabalha com serviço de telefonia — você deverá solicitar a portabilidade desse serviço. Podemos realizar esse procedimento também neste atendimento?"
+    ]
+  },
+  {
+    "title": "Débitos com Terceiros e Outros Setores",
+    "items": [
+      "CDL\nIdentifiquei que essa pendência não pode mais ser paga pela G6, pois foi encaminhada ao Sindicato do Comércio. Você deve fazer a negociação e o pagamento diretamente com esse órgão.\nTelefone (Associação Comercial): (35) 3622-3511",
+      "ACEG — Guará\nApós a troca da empresa, os débitos pendentes na época da alteração foram transferidos para a ACEG. Para tratar dessa pendência, é necessário falar diretamente com eles.\nTelefone: (12) 3128-2200",
+      "Quem cuida dessa questão de cotação para o próximo ano é a Yara. Segue o contato para que você possa falar com ela: 😊\nYara — WhatsApp: (35) 99182-0055\nE-mail: yara.alves@g6internet.com.br",
+      "Uma equipe responsável está entrando em contato com todos os clientes para fornecer informações e esclarecer dúvidas sobre a migração do plano para o novo sistema de TV.\nSegue o número da atendente responsável, que pode ajudar diretamente: (12) 99751-6297",
+      "Entendo a sua frustração por ficar sem o serviço de TV e peço desculpas pelo transtorno. No momento, estamos com alta demanda de atendimentos e, por isso, não conseguimos ir imediatamente.\nA equipe já está ciente da sua solicitação e sabe que se trata de um caso urgente. O atendimento será realizado ainda hoje, sem falta. Também solicitei que entrem em contato antes de ir, para que você fique ciente.",
+      "Infelizmente não será possível emitir boleto referente a este contrato, pois ele foi encerrado devido à inadimplência. Por gentileza, procure diretamente o CDL: (35) 3622-3511.",
+      "Verifiquei no sistema que sua dívida já não está mais com a G6 Internet — ela foi registrada junto à empresa de restrição de crédito, que entrará em contato para dar mais orientações. Por gentileza, aguarde o retorno do CDL."
+    ]
+  },
+  {
+    "title": "Confirmação de Dados Cadastrais",
+    "items": [
+      "Certo! Para darmos continuidade ao atendimento, poderia confirmar o número de telefone e o e-mail do titular do contrato, por gentileza?",
+      "Poderia confirmar o e-mail também?",
+      "Você poderia confirmar seus dados de e-mail e número de celular para atualizarmos em nosso sistema?",
+      "Perfeito! Acabei de atualizar seus dados. Caso não consiga fazer a verificação de acesso ao portal pelo e-mail, envie o código recebido por SMS.",
+      "Estamos realizando uma atualização importante em nosso sistema para melhorar o atendimento e a experiência com nossos serviços. Para garantir que tudo esteja em ordem, poderia confirmar os dados do cadastro, por favor?\n\nNúmero de telefone:\nE-mail:\n\nAgradecemos muito pela colaboração!",
+      "Olá, tudo bem? Espero que sim! 😊\nFalo com [nome do cliente]?\nSou [seu nome], da G6 Internet. Verifiquei no sistema que você não possui um e-mail cadastrado. Poderia me enviar um novo e-mail, por favor?\n\nQualquer coisa, estamos à disposição!\nTelefones: (35) 3629-6550 ou (35) 99977-405"
+    ]
+  },
+  {
+    "title": "Mensagens de Cortesia e Encerramento de Atendimento",
+    "items": [
+      "Muito obrigado(a)!",
+      "Eu que agradeço! Qualquer coisa, fico à disposição. 😊",
+      "Disponha! Se precisar de algo mais, é só chamar. 😊",
+      "Foi um prazer ajudar! Se precisar de algo mais, é só chamar. 😊",
+      "Algo mais em que eu possa ajudar por ora?",
+      "Eu que agradeço! Posso ajudar em algo mais? 😊",
+      "Posso ajudar em algo mais?",
+      "Foi um prazer ajudar. Tenha um ótimo dia!",
+      "Estamos à disposição sempre que precisar. 😊",
+      "Um ótimo dia para você também! 😊",
+      "Perfeito! 😊",
+      "Eu que agradeço!",
+      "Tudo bem sim! Obrigado(a) por perguntar. 😊 Como posso ajudar?",
+      "Efetuou o pagamento — um momento que irei te transferir para o setor responsável. 😊",
+      "Entendo que você queira cancelar. Posso entender melhor o motivo, para verificar se conseguimos uma solução mais adequada para você?",
+      "Um momento, por favor. Irei encaminhar para o setor responsável.",
+      "No momento, vou fazer meu intervalo de almoço; por isso, estarei transferindo o seu atendimento para outro atendente! Até breve 👋",
+      "Meu horário de expediente está encerrando, mas fique à vontade para nos contatar sempre que precisar — estaremos à disposição. 😊"
+    ]
+  }
+];
+/* @DATA_END */
+
+/* =========================================================================
+   DADOS — ABA 2: Abertura de Solicitação (notas internas de protocolo)
+   Frases curtas usadas para registrar o atendimento/ticket no sistema.
+   Mesma estrutura: "title" + lista de "items".
+   ========================================================================= */
+/* @DATA2_START */
+const DATA2 = [
+  {
+    "title": "Boletos e Pagamentos",
+    "items": [
+      "CLIENTE SOLICITOU SEGUNDA VIA DO BOLETO",
+      "CLIENTE SOLICITOU CÓDIGO DE BARRAS",
+      "CLIENTE SOLICITOU CÓDIGO PIX PARA PAGAMENTO — ENVIADO COPIA E COLA",
+      "ENVIADO CÓDIGO COPIA E COLA PARA PAGAMENTO VIA PIX",
+      "CLIENTE ENVIOU COMPROVANTE DE PAGAMENTO"
+    ]
+  },
+  {
+    "title": "Bloqueio e Desbloqueio de Sinal",
+    "items": [
+      "DESBLOQUEIO DE CONFIANÇA +1 PARA PAGAMENTO (AUTORIZADO)",
+      "DESBLOQUEIO ATÉ O DIA ___ AUTORIZADO PELA SARA",
+      "SÁBADO OU FERIADO: PAGAMENTO AGENDADO PARA O PRÓXIMO DIA ÚTIL — CLIENTE DESBLOQUEADO",
+      "CLIENTE PERGUNTOU POR QUANTO TEMPO A CONEXÃO FICARÁ ATIVA - INFORMADO QUE ATÉ SEGUNDA AS 10H Nova mensagem — clique para editar."
+    ]
+  },
+  {
+    "title": "Suporte Técnico",
+    "items": [
+      "CLIENTE GOSTARIA DE SABER SE SUA CONEXÃO FOI RESTABELECIDA"
+    ]
+  },
+  {
+    "title": "Cadastro",
+    "items": [
+      "CLIENTE SOLICITOU ATUALIZAÇÃO DE DADOS DO CADASTRO"
+    ]
+  }
+];
+/* @DATA2_END */
+
+/* ========================= Configuração das abas ========================= */
+const TABS = [
+  { key:"atendimento", label:"Mensagens de Atendimento", data:DATA,
+    brandSub:"Banco de respostas padrão para atendimento",
+    pageTitle:"Mensagens de Atendimento",
+    pageSub:'Todas as respostas padrão organizadas por assunto. Use a busca para encontrar rapidamente, clique em "Copiar" para colar no WhatsApp, ou edite o texto diretamente clicando sobre ele.' },
+  { key:"solicitacao", label:"Abertura de Solicitação", data:DATA2,
+    brandSub:"Notas rápidas para registrar tickets/protocolos",
+    pageTitle:"Abertura de Solicitação",
+    pageSub:"Frases curtas para colar no sistema ao abrir ou registrar uma solicitação/protocolo, organizadas por assunto." },
+];
+let currentTabKey = TABS[0].key;
+
+/* ========================= Render engine ========================= */
+const contentEl = document.getElementById('content');
+const navEl = document.getElementById('navList');
+const searchInput = document.getElementById('searchInput');
+const resultCount = document.getElementById('resultCount');
+const tabbarEl = document.getElementById('tabbar');
+const brandTitleEl = document.getElementById('brandTitle');
+const brandSubEl = document.getElementById('brandSub');
+const pageTitleEl = document.getElementById('pageTitle');
+const pageSubEl = document.getElementById('pageSub');
+
+function currentTab(){
+  return TABS.find(t => t.key === currentTabKey);
+}
+
+function slug(str){
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+
+function renderTabbar(){
+  tabbarEl.innerHTML = '';
+  TABS.forEach(t => {
+    const count = t.data.reduce((n,c) => n + c.items.length, 0);
+    const btn = document.createElement('button');
+    btn.className = t.key === currentTabKey ? 'active' : '';
+    btn.innerHTML = `<span>${t.label}</span><span class="count">${count}</span>`;
+    btn.onclick = () => {
+      if(currentTabKey === t.key) return;
+      currentTabKey = t.key;
+      searchInput.value = '';
+      renderAll();
+    };
+    tabbarEl.appendChild(btn);
+  });
+}
+
+function render(){
+  const tab = currentTab();
+  const data = tab.data;
+
+  brandTitleEl.textContent = 'Mensagens · G6';
+  brandSubEl.textContent = tab.brandSub;
+  pageTitleEl.textContent = tab.pageTitle;
+  pageSubEl.textContent = tab.pageSub;
+
+  contentEl.innerHTML = '';
+  navEl.innerHTML = '';
+
+  data.forEach((cat, ci) => {
+    const id = 'cat-' + tab.key + '-' + slug(cat.title);
+
+    // nav item
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + id;
+    a.innerHTML = `<span class="idx">${String(ci+1).padStart(2,'0')}</span><span>${cat.title}</span><span class="nav-count">${cat.items.length}</span>`;
+    li.appendChild(a);
+    navEl.appendChild(li);
+
+    // section
+    const section = document.createElement('section');
+    section.className = 'category';
+    section.id = id;
+
+    const h3 = document.createElement('h3');
+    h3.innerHTML = `<span class="n">${String(ci+1).padStart(2,'0')}</span> ${cat.title}`;
+    section.appendChild(h3);
+
+    cat.items.forEach((text, ii) => {
+      section.appendChild(buildCard(data, ci, ii, text));
+    });
+
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-btn';
+    addBtn.textContent = '+ Nova mensagem';
+    addBtn.onclick = () => {
+      data[ci].items.push('Nova mensagem — clique para editar.');
+      markDirty();
+      render();
+      applyFilter(searchInput.value);
+      const cards = document.querySelectorAll(`section#${CSS.escape(id)} .msg-card`);
+      const last = cards[cards.length - 1];
+      if(last) last.querySelector('.text').focus();
+    };
+    addRow.appendChild(addBtn);
+    section.appendChild(addRow);
+
+    contentEl.appendChild(section);
+  });
+
+  const addCatBtn = document.createElement('button');
+  addCatBtn.className = 'add-cat-btn';
+  addCatBtn.textContent = '+ Nova categoria';
+  addCatBtn.onclick = () => {
+    const newTitle = prompt('Nome da nova categoria:');
+    if(newTitle && newTitle.trim() !== '') {
+      tab.data.push({
+        title: newTitle.trim(),
+        items: ['Nova mensagem — clique para editar.']
+      });
+      markDirty();
+      renderAll();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+  };
+  navEl.appendChild(addCatBtn);
+
+  highlightActiveNav();
+}
+
+function buildCard(data, ci, ii, text){
+  const card = document.createElement('div');
+  card.className = 'msg-card';
+
+  const txt = document.createElement('div');
+  txt.className = 'text';
+  txt.contentEditable = 'true';
+  txt.spellcheck = true;
+  txt.textContent = text;
+  txt.addEventListener('input', () => {
+    data[ci].items[ii] = txt.textContent;
+    markDirty();
+  });
+  card.appendChild(txt);
+
+  const actions = document.createElement('div');
+  actions.className = 'msg-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn copy';
+  copyBtn.textContent = 'Copiar';
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(txt.textContent).then(() => {
+      copyBtn.textContent = 'Copiado ✓';
+      copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copiar'; copyBtn.classList.remove('copied'); }, 1400);
+    });
+  };
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn remove';
+  removeBtn.textContent = 'Remover';
+  removeBtn.onclick = () => {
+    if(confirm('Remover esta mensagem?')){
+      data[ci].items.splice(ii,1);
+      markDirty();
+      render();
+      applyFilter(searchInput.value);
+    }
+  };
+
+  actions.appendChild(removeBtn);
+  actions.appendChild(copyBtn);
+  card.appendChild(actions);
+
+  return card;
+}
+
+function normalize(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function applyFilter(query){
+  const q = normalize(query.trim());
+  let visibleCount = 0;
+  let totalCount = 0;
+
+  document.querySelectorAll('section.category').forEach(section => {
+    let anyVisible = false;
+    const catTitle = normalize(section.querySelector('h3').textContent);
+    section.querySelectorAll('.msg-card').forEach(card => {
+      totalCount++;
+      const text = normalize(card.querySelector('.text').textContent);
+      const match = !q || text.includes(q) || catTitle.includes(q);
+      card.style.display = match ? '' : 'none';
+      if(match){ anyVisible = true; visibleCount++; }
+    });
+    section.style.display = anyVisible ? '' : 'none';
+  });
+
+  resultCount.textContent = q ? `${visibleCount} de ${totalCount} mensagens` : `${totalCount} mensagens`;
+}
+
+function highlightActiveNav(){
+  const links = navEl.querySelectorAll('a');
+  const sections = document.querySelectorAll('section.category');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        links.forEach(l => l.classList.remove('active'));
+        const link = navEl.querySelector(`a[href="#${entry.target.id}"]`);
+        if(link) link.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-10% 0px -80% 0px'});
+  sections.forEach(s => obs.observe(s));
+}
+
+function renderAll(){
+  renderTabbar();
+  render();
+  applyFilter(searchInput.value);
+}
+
+searchInput.addEventListener('input', (e) => applyFilter(e.target.value));
+
+/* ========================= Salvar / exportar ========================= */
+const saveBtn = document.getElementById('saveBtn');
+const saveBtnLabel = document.getElementById('saveBtnLabel');
+let isDirty = false;
+
+function markDirty(){
+  isDirty = true;
+  saveBtn.classList.add('dirty');
+  saveBtn.classList.remove('saved');
+  saveBtnLabel.textContent = 'Salvar alterações';
+}
+
+function exportHTML(){
+  const newDataBlock = '/* @DATA_START */\nconst DATA = ' + JSON.stringify(DATA, null, 2) + ';\n/* @DATA_END */';
+  const newData2Block = '/* @DATA2_START */\nconst DATA2 = ' + JSON.stringify(DATA2, null, 2) + ';\n/* @DATA2_END */';
+
+  let fullSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  fullSource = fullSource.replace(/\/\* @DATA_START \*\/[\s\S]*?\/\* @DATA_END \*\//, newDataBlock);
+  fullSource = fullSource.replace(/\/\* @DATA2_START \*\/[\s\S]*?\/\* @DATA2_END \*\//, newData2Block);
+
+  const blob = new Blob([fullSource], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mensagens.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  isDirty = false;
+  saveBtn.classList.remove('dirty');
+  saveBtn.classList.add('saved');
+  saveBtnLabel.textContent = 'Salvo ✓';
+  setTimeout(() => {
+    saveBtn.classList.remove('saved');
+    saveBtnLabel.textContent = 'Salvar alterações';
+  }, 2200);
+}
+
+saveBtn.addEventListener('click', exportHTML);
+
+document.addEventListener('keydown', (e) => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){
+    e.preventDefault();
+    exportHTML();
+  }
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if(isDirty){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+renderAll();
+</script>
+
+</body></html>
